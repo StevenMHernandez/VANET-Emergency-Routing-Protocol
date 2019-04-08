@@ -239,12 +239,12 @@ PacketQueue::Drop (PacketIdMap::iterator en, std::string reason)
 
 
 
-SummaryVectorHeader
-PacketQueue::GetSummaryVector ()
+VehiclePathVectorHeader
+PacketQueue::GetVehiclePathVector ()
 {
   NS_LOG_FUNCTION (this );
   Purge (true);
-  SummaryVectorHeader sm (m_map.size ());
+  VehiclePathVectorHeader sm (m_map.size ());
   for (PacketIdMap::iterator i = m_map.begin (); i != m_map.end (); ++i)
     {
       sm.Add (i->first);
@@ -253,11 +253,11 @@ PacketQueue::GetSummaryVector ()
 }
 
 
-SummaryVectorHeader
-PacketQueue::FindDisjointPackets (SummaryVectorHeader list)
+VehiclePathVectorHeader
+PacketQueue::FindDisjointPackets (VehiclePathVectorHeader list)
 {
   NS_LOG_FUNCTION (this << list);
-  SummaryVectorHeader sm (std::min (m_map.size (), list.Size ()));
+  VehiclePathVectorHeader sm (std::min (m_map.size (), list.Size ()));
   for (PacketIdMap::iterator i = m_map.begin (); i != m_map.end (); ++i)
     {
       if (!list.Contains (i->first))

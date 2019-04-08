@@ -61,7 +61,7 @@ namespace ns3 {
             /// Time in seconds for sending periodic beacon packets
             Time m_beaconInterval;
             /// Time in seconds for host recent period, in which hosts can not
-            // re-exchange summary vectors
+            // re-exchange vehicle route vectors
             Time m_hostRecentPeriod;
             /// Upper bound of the uniform distribution random time added
             // to avoid collisions. Measured in milliseconds
@@ -73,7 +73,7 @@ namespace ns3 {
             /// A map between opened sockets and IP addresses
             std::map<Ptr<Socket>, Ipv4InterfaceAddress> m_socketAddresses;
             /// queue associated with a node
-            PacketQueue m_queue;
+//            PacketQueue m_queue;
             /// timer for sending beacons
             Timer m_beaconTimer;
             /// uniform random variable to be added to beacon intervals
@@ -90,14 +90,14 @@ namespace ns3 {
 
             void Start ();
             void RecvUrbanRouting (Ptr<Socket> socket);
-            void SendDisjointPackets (SummaryVectorHeader packet_SMV, Ipv4Address dest);
+            void SendDisjointVehiclePath (VehiclePathVectorHeader packet_SMV, Ipv4Address dest);
             void SendBeacons ();
             uint32_t FindOutputDeviceForAddress ( Ipv4Address  dst);
             uint32_t FindLoopbackDevice ();
             void SendPacket (Ptr<Packet> p,InetSocketAddress addr);
             bool IsMyOwnAddress (Ipv4Address src);
             void BroadcastPacket (Ptr<Packet> p);
-            void SendSummaryVector (Ipv4Address dest,bool firstNode);
+            void SendVehiclePathVector(Ipv4Address dest, bool firstNode);
             Ptr<Socket> FindSocketWithInterfaceAddress (
                     Ipv4InterfaceAddress iface) const;
             void SendPacketFromQueue (Ipv4Address dst,QueueEntry queueEntry);

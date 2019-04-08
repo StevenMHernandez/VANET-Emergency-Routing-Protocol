@@ -1,7 +1,7 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 
 #include "urban-routing-helper.h"
-#include "ns3/urban-routing.h"
+#include "ns3/urban-routing-protocol.h"
 
 
 namespace ns3 {

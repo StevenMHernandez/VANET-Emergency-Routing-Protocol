@@ -7,7 +7,7 @@
 /**
  * \file
  * \ingroup UrbanRouting
- * ns3::UrbanRouting::TypeHeader, ns3::UrbanRouting::UrbanRoutingSummaryVectorHeader
+ * ns3::UrbanRouting::TypeHeader, ns3::UrbanRouting::UrbanRoutingVehiclePathVectorHeader
  * and ns3::UrbanRouting::UrbanRoutingHeader implementations.
  */
 
@@ -75,8 +75,9 @@ TypeHeader::Deserialize (Buffer::Iterator start)
   switch (type)
     {
     case BEACON:
-    case REPLY:
-    case REPLY_BACK:
+    case VEHICLE_PATH:
+    case VEHICLE_PATH_BACK:
+    case MESSAGE:
       {
         m_type = (MessageType) type;
         break;
@@ -100,15 +101,20 @@ TypeHeader::Print (std::ostream &os) const
         os << "BEACON";
         break;
       }
-    case REPLY:
+    case VEHICLE_PATH:
       {
-        os << "REPLY";
+        os << "VEHICLE_PATH";
         break;
       }
-    case REPLY_BACK:
+    case VEHICLE_PATH_BACK:
       {
-        os << "REPLY_BACK";
+        os << "VEHICLE_PATH_BACK";
         break;
+      }
+    case MESSAGE:
+      {
+          os << "MESSAGE";
+          break;
       }
     default:
       os << "UNKNOWN_TYPE";
@@ -142,48 +148,53 @@ operator<< (std::ostream & os, TypeHeader const & h)
   return os;
 }
 
-NS_OBJECT_ENSURE_REGISTERED (SummaryVectorHeader);
 
-SummaryVectorHeader::SummaryVectorHeader (size_t size)
+
+
+
+
+NS_OBJECT_ENSURE_REGISTERED (VehiclePathVectorHeader);
+
+VehiclePathVectorHeader::VehiclePathVectorHeader (size_t size)
 {
   NS_LOG_FUNCTION (this << size);
-  m_packets.reserve (size);
+  m_intersections.reserve (size);
 }
 
-SummaryVectorHeader::~SummaryVectorHeader ()
+VehiclePathVectorHeader::~VehiclePathVectorHeader ()
 {
   NS_LOG_FUNCTION (this);
 }
 
 TypeId
-SummaryVectorHeader::GetTypeId (void)
+VehiclePathVectorHeader::GetTypeId (void)
 {
   static TypeId tid =
-    TypeId ("ns3::UrbanRouting::SummaryVectorHeader")
+    TypeId ("ns3::UrbanRouting::VehiclePathVectorHeader")
     .SetParent<Header> ()
-    .AddConstructor<SummaryVectorHeader> ();
+    .AddConstructor<VehiclePathVectorHeader> ();
   return tid;
 }
 
 TypeId
-SummaryVectorHeader::GetInstanceTypeId () const
+VehiclePathVectorHeader::GetInstanceTypeId () const
 {
   return GetTypeId ();
 }
 
 uint32_t
-SummaryVectorHeader::GetSerializedSize () const
+VehiclePathVectorHeader::GetSerializedSize () const
 {
-  return sizeof(uint32_t) + (uint32_t) m_packets.size () * sizeof (uint32_t);
+  return sizeof(uint32_t) + (uint32_t) m_intersections.size () * sizeof (uint32_t);
 }
 
 void
-SummaryVectorHeader::Serialize (Buffer::Iterator i) const
+VehiclePathVectorHeader::Serialize (Buffer::Iterator i) const
 {
-  i.WriteHtonU32 (m_packets.size ());
+  i.WriteHtonU32 (m_intersections.size ());
 
-  for (std::vector<uint32_t>::const_iterator j = m_packets.begin ();
-       j != m_packets.end (); ++j)
+  for (std::vector<uint32_t>::const_iterator j = m_intersections.begin ();
+       j != m_intersections.end (); ++j)
     {
       i.WriteHtonU32 (*j);
     }
@@ -191,15 +202,15 @@ SummaryVectorHeader::Serialize (Buffer::Iterator i) const
 }
 
 uint32_t
-SummaryVectorHeader::Deserialize (Buffer::Iterator start)
+VehiclePathVectorHeader::Deserialize (Buffer::Iterator start)
 {
   Buffer::Iterator i = start;
   uint32_t sm_length = i.ReadNtohU32 ();
-  m_packets.reserve (sm_length);
+  m_intersections.reserve (sm_length);
   for (uint32_t j = 0; j < sm_length; ++j)
     {
       uint32_t tmp = i.ReadNtohU32 ();
-      m_packets.push_back (tmp);
+      m_intersections.push_back (tmp);
     }
   uint32_t dist = i.GetDistanceFrom (start);
   NS_ASSERT (dist == GetSerializedSize ());
@@ -209,7 +220,7 @@ SummaryVectorHeader::Deserialize (Buffer::Iterator start)
 
 
 std::ostream &
-operator<< (std::ostream & os, SummaryVectorHeader const & packet)
+operator<< (std::ostream & os, VehiclePathVectorHeader const & packet)
 {
   packet.Print (os);
   return os;
@@ -217,43 +228,58 @@ operator<< (std::ostream & os, SummaryVectorHeader const & packet)
 
 
 void
-SummaryVectorHeader::Print (std::ostream &os) const
+VehiclePathVectorHeader::Print (std::ostream &os) const
 {
-  os << " Summary_vector header with size: " << m_packets.size ()
-  << "\nGlobal IDs:\n" << "NodeID:PacketID\n";
-  for (std::vector<uint32_t>::const_iterator j = m_packets.begin ();
-       j != m_packets.end (); ++j)
+  os << " vehicle_path_vector header with size: " << m_intersections.size ()
+  << std::endl << "Vehicle Path:" << std::endl;
+  for (std::vector<uint32_t>::const_iterator j = m_intersections.begin (); j != m_intersections.end (); ++j)
     {
-      uint32_t a;
-      uint32_t b;
-      a = (uint32_t)((*j & 0xFFFF0000) >> 16);
-      b = (uint32_t)(*j & 0xFFFF);
-      Ipv4Address new_addr = Ipv4Address (a);
-      os <<  new_addr <<  ":" << b << std::endl;
+        os << "  Intersection: " << *j;
+        if (*j == m_prev_intersection) { os << " <- previous"; }
+        if (*j == m_next_intersection) { os << " <- next"; }
+        os << std::endl;
     }
 }
 
 void
-SummaryVectorHeader::Add (const uint32_t pkt_ID)
+VehiclePathVectorHeader::SetCurrent(const uint32_t prev_intersection, const uint32_t next_intersection)
+{
+    NS_LOG_FUNCTION (this << "prev intersection" << prev_intersection);
+    NS_LOG_FUNCTION (this << "next intersection"  << next_intersection);
+    m_prev_intersection = prev_intersection;
+    m_next_intersection = next_intersection;
+}
+
+void
+VehiclePathVectorHeader::Add (const uint32_t pkt_ID)
 {
   NS_LOG_FUNCTION (this << pkt_ID);
-  m_packets.push_back (pkt_ID);
+  m_intersections.push_back (pkt_ID);
 }
 
 size_t
-SummaryVectorHeader::Size (void) const
+VehiclePathVectorHeader::Size (void) const
 {
-  return m_packets.size ();
+  return m_intersections.size ();
 }
 
 
 bool
-SummaryVectorHeader::Contains (const uint32_t pkt_ID) const
+VehiclePathVectorHeader::Contains (const uint32_t pkt_ID) const
 {
-  bool contained = ( std::find (m_packets.begin (), m_packets.end (), pkt_ID)
-                     != m_packets.end () );
+  bool contained = ( std::find (m_intersections.begin (), m_intersections.end (), pkt_ID)
+                     != m_intersections.end () );
   return contained;
 }
+
+
+
+
+
+
+
+
+
 
 
 NS_OBJECT_ENSURE_REGISTERED (UrbanRoutingHeader);

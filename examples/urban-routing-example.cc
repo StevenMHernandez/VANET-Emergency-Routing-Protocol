@@ -38,7 +38,7 @@ main(int argc, char *argv[]) {
     double appDataStart = 10.0;
     double appDataEnd = 15;
     uint32_t source_num = 0;
-    uint32_t sink_num = 9;
+    uint32_t sink_num = 1;
 
     /*
     Allow users to override the default parameters and set it to
@@ -112,6 +112,7 @@ main(int argc, char *argv[]) {
     {
         LogComponentEnable ("OnOffApplication", LOG_LEVEL_INFO);
         LogComponentEnable ("PacketSink", LOG_LEVEL_INFO);
+        LogComponentEnable ("UrbanRoutingRoutingProtocol", LOG_LEVEL_INFO);
         LogComponentEnableAll (LOG_PREFIX_TIME);
         LogComponentEnableAll (LOG_PREFIX_NODE);
         LogComponentEnableAll (LOG_PREFIX_FUNC);

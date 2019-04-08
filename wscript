@@ -9,7 +9,7 @@
 def build(bld):
     module = bld.create_ns3_module('urban-routing', ['core', 'mobility', 'internet'])
     module.source = [
-        'model/urban-routing.cc',
+        'model/urban-routing-protocol.cc',
         'model/urban-routing-packet.cc',
         'model/urban-routing-packet-queue.cc',
         'model/urban-routing-tag.cc',
@@ -24,7 +24,7 @@ def build(bld):
     headers = bld(features='ns3header')
     headers.module = 'urban-routing'
     headers.source = [
-        'model/urban-routing.h',
+        'model/urban-routing-protocol.h',
         'model/urban-routing-packet.h',
         'model/urban-routing-packet-queue.h',
         'model/urban-routing-tag.h',

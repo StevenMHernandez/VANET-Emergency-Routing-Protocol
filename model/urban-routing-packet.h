@@ -12,7 +12,7 @@
 /**
  * \file
  * \ingroup UrbanRouting
- * ns3::UrbanRouting::TypeHeader, ns3::UrbanRouting::SummaryVectorHeader
+ * ns3::UrbanRouting::TypeHeader, ns3::UrbanRouting::VehiclePathVectorHeader
  * and ns3::UrbanRouting::UrbanRoutingHeader declarations.
  */
 
@@ -25,20 +25,12 @@ namespace UrbanRouting {
  * \ingroup UrbanRouting
  * \brief  UrbanRouting routing packet type header.
  *
- * UrbanRouting routing packets come in three types:
+ * UrbanRouting users two routing packets types:
  *
- * 1. Beacon Packet: it is used to advertise the presence of a node
- *    in the network.
- * 2. Reply Packet: once a beacon packet is received, it starts
- *    the anti-entropy session.
- *    1.  Packet with smaller network ID (i.e. IP) will send a reply packet,
- *        which contains summary vector of all the packet IDs in its buffer.
- * 3. Reply Back Packet: once a reply packet is received,
- *    the receiver determines the disjoint packets between its buffer
- *    and the received summary vector. Then, it sends the disjoint
- *    packets the other node. After that, it sends a reply back packet
- *    containing a summary vector of all the packet IDs in its buffer
- *    so the other host sends the disjoint packets as well.
+ * 1. Beacon Packet: it is used to advertise the presence of a node in the network.
+ * 2. Path Data Packet: after first receiving a beacon packet, a reply packet shares vehicle routing information
+ * 2. Path Data Packet Back: after receiving path data pack, a reply packet shares vehicle routing information
+ * 4. Message Packet: contains the message to be further broadcast into the network.
  *
   \verbatim
    0
@@ -54,10 +46,10 @@ public:
   /// MessageType enum, several types for UrbanRouting control packets
   enum MessageType
   {
-    BEACON,     //!< Advertise the presence of a node
-    REPLY,      //!< Reply to a beacon, with the packet Id summary vector
-    REPLY_BACK, //!< Response to a Reply packet, as list of disjoint packets.
-
+    BEACON,
+    VEHICLE_PATH,
+    VEHICLE_PATH_BACK,
+    MESSAGE,
   };
 
   /**
@@ -123,29 +115,36 @@ std::ostream & operator<< (std::ostream & os, TypeHeader const & h);
 
 /**
 * \ingroup UrbanRouting
-* \brief    UrbanRouting Summary Vector Header
-*  This packet is used to carry the packet IDs of packets located
-*  in the host's buffer to the other node.
+* \brief    UrbanRouting Vehicle Path Vector Header
+*  This packet is used to carry the vehicles location routing information
   \verbatim
   0                   1                   2                   3
   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-  |                   32 bit Summary Vector Length                |
+  |                   32 bit Previous Intersection                |
   +                                                               +
   |                                                               |
   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-  |                   32 bit Global ID for Packet # 1             |
+  |                   32 bit Next Intersection                    |
   +                                                               +
   |                                                               |
   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-  |                   32 bit Global ID for Packet # 2             |
+  |                   32 bit Path Vector Length                   |
+  +                                                               +
+  |                                                               |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |                   32 bit Intersection #1                      |
+  +                                                               +
+  |                                                               |
+  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  |                   32 bit Intersection #2                      |
   |                                                               |
   |                              .                                |
   |                              .                                |
   |                              .                                |
   |                                                               |
   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-  |                   32 bit Global ID for Packet # n             |
+  |                   32 bit Intersection #n                      |
   +                                                               +
   |                                                               |
   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -153,17 +152,17 @@ std::ostream & operator<< (std::ostream & os, TypeHeader const & h);
 */
 
 
-class SummaryVectorHeader : public Header
+class VehiclePathVectorHeader : public Header
 {
 public:
   /**
   * \brief Constructor.
   */
-  SummaryVectorHeader (size_t size2 = 0);
+  VehiclePathVectorHeader (size_t size2 = 0);
   /**
    * \brief Destructor.
    */
-  virtual ~SummaryVectorHeader ();
+  virtual ~VehiclePathVectorHeader ();
   /**
    * \return The object TypeId.
    */
@@ -175,34 +174,23 @@ public:
   virtual uint32_t Deserialize (Buffer::Iterator start);
   virtual void Print (std::ostream &os) const;
 
+  void SetCurrent (const uint32_t prev_intersection, const uint32_t next_intersection);
 
-  /**
-   * Add a global packet id.
-   *
-   * \param pkt_ID The global packet id to add.
-   */
-  void Add (const uint32_t pkt_ID);
-  /**
-   * Check for a global packet id.
-   *
-   * \param pkt_ID The global packet id to check for.
-   * \return True if the packet is in this summary vector.
-   */
-  bool Contains (const uint32_t pkt_ID) const;
-  /**
-   * Get the number of entries.
-   *
-   * \return The number of global packet IDs in this header.
-   */
+  void Add (const uint32_t intersection);
+
+  bool Contains (const uint32_t intersection) const;
+
   size_t Size (void) const;
 
 private:
   /**
    * A vector to store packet IDs.
    */
-  std::vector<uint32_t> m_packets;
+  uint32_t m_prev_intersection;
+  uint32_t m_next_intersection;
+  std::vector<uint32_t> m_intersections;
 
-  // RoutingProtocol::SendDisjointPackets
+  // RoutingProtocol::SendDisjointVehiclePath
   // needs to iterate through the vector
   friend class RoutingProtocol;
 
@@ -210,19 +198,19 @@ private:
 
 /**
  * \ingroup UrbanRouting
- * \brief Output streamer for UrbanRoutingSummaryVectorHeader.
+ * \brief Output streamer for UrbanRoutingVehiclePathVectorHeader.
  *
  * \param os The stream.
- * \param packet The UrbanRoutingSummaryVectorHeader.
+ * \param packet The UrbanRoutingVehiclePathVectorHeader.
  * \returns The stream.
  */
 
 std::ostream &operator<< (std::ostream& os,
-                          const SummaryVectorHeader & packet);
+                          const VehiclePathVectorHeader & packet);
 
 /**
  * \ingroup UrbanRouting
- * \brief UrbanRouting Summary Vector Header
+ * \brief UrbanRouting VehiclePath Vector Header
  *
  *  This packet header is added to a data packet in the source node once it is
  *  received from the transport layer. It is removed in the receiver node

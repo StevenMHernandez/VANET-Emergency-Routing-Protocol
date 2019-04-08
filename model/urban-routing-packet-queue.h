@@ -93,7 +93,7 @@ private:
 
 
 // Forward declaration
-class SummaryVectorHeader;
+class VehiclePathVectorHeader;
 
 /**
  * \ingroup UrbanRouting
@@ -146,14 +146,14 @@ public:
    */
   QueueEntry  Find (uint32_t packetID);
   /// \returns the summary vector of a current node's buffer
-  SummaryVectorHeader GetSummaryVector ();
+  VehiclePathVectorHeader GetVehiclePathVector ();
   /**
    * \brief Returns a summary vector that contains
    *  the disjoint packets between the given list and current buffer
    * \param list a list of compared packet IDs
    * \returns the summary vector of the disjoint packets
    */
-  SummaryVectorHeader FindDisjointPackets (SummaryVectorHeader list);
+  VehiclePathVectorHeader FindDisjointPackets (VehiclePathVectorHeader list);
   /// Drop expired packet in the current node's buffer
   void DropExpiredPackets ();
 

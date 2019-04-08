@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 
-#include "urban-routing.h"
+#include "urban-routing-protocol.h"
 #include <vector>
 #include "ns3/boolean.h"
 #include "ns3/config.h"
@@ -73,8 +73,9 @@ namespace ns3 {
                   m_beaconInterval(Seconds(0)),
                   m_hostRecentPeriod(Seconds(0)),
                   m_beaconMaxJitterMs(0),
-                  m_dataPacketCounter(0),
-                  m_queue(m_maxQueueLen) {
+                  m_dataPacketCounter(0)//,
+//                  m_queue(m_maxQueueLen)
+                  {
             NS_LOG_FUNCTION(this);
         }
 
@@ -109,7 +110,7 @@ namespace ns3 {
         void
         RoutingProtocol::Start() {
             NS_LOG_FUNCTION(this);
-            m_queue.SetMaxQueueLen(m_maxQueueLen);
+//            m_queue.SetMaxQueueLen(m_maxQueueLen);
             m_beaconTimer.SetFunction(&RoutingProtocol::SendBeacons, this);
             m_beaconJitter = CreateObject<UniformRandomVariable>();
             m_beaconJitter->SetAttribute("Max", DoubleValue(m_beaconMaxJitterMs));
@@ -385,10 +386,9 @@ namespace ns3 {
              *  Check all the interfaces local addresses for local delivery
              */
 
-            for (std::map < Ptr < Socket > , Ipv4InterfaceAddress > ::const_iterator j =
-                                                                                             m_socketAddresses.begin();
+            for (std::map < Ptr < Socket >, Ipv4InterfaceAddress > ::const_iterator j = m_socketAddresses.begin();
                     j != m_socketAddresses.end();
-            ++j)
+                    ++j)
             {
                 Ipv4InterfaceAddress iface = j->second;
                 int32_t iif = m_ipv4->GetInterfaceForDevice(idev);
@@ -416,13 +416,13 @@ namespace ns3 {
                             local_copy->RemoveHeader(header);
                             // Try to see the packet has been
                             // delivered i.e. in the UrbanRouting buffer
-                            if (m_queue.Find(
-                                    current_Header.GetPacketID()).GetPacketID()
-                                == 0) {
-                                m_queue.Enqueue(newEntry);
-                            } else {
-                                duplicatePacket = true;
-                            }
+//                            if (m_queue.Find(
+//                                    current_Header.GetPacketID()).GetPacketID()
+//                                == 0) {
+//                                m_queue.Enqueue(newEntry);
+//                            } else {
+//                                duplicatePacket = true;
+//                            }
                         }
                         /*
                         Deliver the packet locally
@@ -503,7 +503,7 @@ namespace ns3 {
                 copy->AddHeader(current_Header);
             }
 
-            m_queue.Enqueue(newEntry);
+//            m_queue.Enqueue(newEntry);
             return true;
 
         }
@@ -619,25 +619,24 @@ namespace ns3 {
 
 
         void
-        RoutingProtocol::SendDisjointPackets(SummaryVectorHeader packet_SMV,
-                                             Ipv4Address dest) {
-            NS_LOG_FUNCTION(this << dest);
-            /*
-            This function is used to find send the packets listed in the vector list
-            */
-            SummaryVectorHeader list = m_queue.FindDisjointPackets(packet_SMV);
-            for (std::vector<uint32_t>::iterator
-                         i = list.m_packets.begin();
-                 i != list.m_packets.end();
-                 ++i) {
-                QueueEntry newEntry = m_queue.Find(*i);
-                if (newEntry.GetPacket()) {
-
-                    Simulator::Schedule(Time(0),
-                                        &RoutingProtocol::SendPacketFromQueue,
-                                        this, dest, newEntry);
-                }
-            }
+        RoutingProtocol::SendDisjointVehiclePath(VehiclePathVectorHeader packet_SMV,
+                                          Ipv4Address dest) {
+        // TODO: consider if this is required.
+//            NS_LOG_FUNCTION(this << dest);
+//            /*
+//            This function is used to find send the packets listed in the vector list
+//            */
+//            VehiclePathVectorHeader list = m_queue.FindDisjointPackets(packet_SMV);
+//            for (std::vector<uint32_t>::iterator i = list.m_intersections.begin(); i != list.m_intersections.end(); ++i)
+//            {
+//                QueueEntry newEntry = m_queue.Find(*i);
+//                if (newEntry.GetPacket()) {
+//
+//                    Simulator::Schedule(Time(0),
+//                                        &RoutingProtocol::SendPacketFromQueue,
+//                                        this, dest, newEntry);
+//                }
+//            }
         }
 
 
@@ -645,10 +644,9 @@ namespace ns3 {
         RoutingProtocol::FindSocketWithInterfaceAddress
                 (Ipv4InterfaceAddress addr) const {
             NS_LOG_FUNCTION(this << addr);
-            for (std::map < Ptr < Socket > , Ipv4InterfaceAddress > ::const_iterator j =
-                                                                                             m_socketAddresses.begin();
+            for (std::map < Ptr < Socket >, Ipv4InterfaceAddress > ::const_iterator j = m_socketAddresses.begin();
                     j != m_socketAddresses.end();
-            ++j)
+                    ++j)
             {
                 Ptr <Socket> socket = j->first;
                 Ipv4InterfaceAddress iface = j->second;
@@ -662,34 +660,38 @@ namespace ns3 {
 
 
         void
-        RoutingProtocol::SendSummaryVector(Ipv4Address dest, bool firstNode) {
+        RoutingProtocol::SendVehiclePathVector(Ipv4Address dest, bool firstNode) {
             NS_LOG_FUNCTION(this << dest << firstNode);
-            // Creating the packet
-            Ptr <Packet> packet_summary = Create<Packet>();
-            SummaryVectorHeader header_summary = m_queue.GetSummaryVector();
-            packet_summary->AddHeader(header_summary);
+            // TODO: create the vehicle route vector somehow!
+            Ptr <Packet> path_summary = Create<Packet>();
+            VehiclePathVectorHeader header_summary = VehiclePathVectorHeader(3);
+            header_summary.Add(9);
+            header_summary.Add(99);
+            header_summary.Add(FindOutputDeviceForAddress (m_mainAddress));
+            header_summary.SetCurrent (9,99);
+
+            path_summary->AddHeader(header_summary);
             TypeHeader tHeader;
             if (firstNode) {
-                tHeader.SetMessageType(TypeHeader::REPLY);
+                tHeader.SetMessageType(TypeHeader::VEHICLE_PATH);
             } else {
-                tHeader.SetMessageType(TypeHeader::REPLY_BACK);
+                tHeader.SetMessageType(TypeHeader::VEHICLE_PATH_BACK);
             }
 
-            packet_summary->AddHeader(tHeader);
+            path_summary->AddHeader(tHeader);
             ControlTag tempTag(ControlTag::CONTROL);
-            packet_summary->AddPacketTag(tempTag);
-            // Send the summary vector
-            NS_LOG_INFO("Sending the summary vector 2 packet " << header_summary);
+            path_summary->AddPacketTag(tempTag);
+            // Send the vehicle path packet
+            NS_LOG_INFO("Sending the vehicle path packet " << header_summary);
             InetSocketAddress addr = InetSocketAddress(dest, URBAN_ROUTING_PORT);
-            SendPacket(packet_summary, addr);
-
+            SendPacket(path_summary, addr);
         }
 
 
         void
         RoutingProtocol::RecvUrbanRouting(Ptr <Socket> socket) {
             NS_LOG_FUNCTION(this << socket);
-            m_queue.DropExpiredPackets();
+//            m_queue.DropExpiredPackets();
             Address address;
             Ptr <Packet> packet = socket->RecvFrom(address);
             TypeHeader tHeader(TypeHeader::BEACON);
@@ -705,21 +707,21 @@ namespace ns3 {
                 // contacted recently
                 if (m_mainAddress.Get() < sender.Get()
                     && !IsHostContactedRecently(sender)) {
-                    SendSummaryVector(sender, true);
+                    SendVehiclePathVector(sender, true);
                 }
-            } else if (tHeader.GetMessageType() == TypeHeader::REPLY) {
+            } else if (tHeader.GetMessageType() == TypeHeader::VEHICLE_PATH) {
                 NS_LOG_LOGIC("Got a A reply from " << sender << " "
                                                    << packet->GetUid() << " " << m_mainAddress);
-                SummaryVectorHeader packet_SMV;
+                VehiclePathVectorHeader packet_SMV;
                 packet->RemoveHeader(packet_SMV);
-                SendDisjointPackets(packet_SMV, sender);
-                SendSummaryVector(sender, false);
-            } else if (tHeader.GetMessageType() == TypeHeader::REPLY_BACK) {
+                SendDisjointVehiclePath(packet_SMV, sender);
+                SendVehiclePathVector(sender, false);
+            } else if (tHeader.GetMessageType() == TypeHeader::VEHICLE_PATH_BACK) {
                 NS_LOG_LOGIC("Got a A reply back from " << sender
                                                         << " " << packet->GetUid() << " " << m_mainAddress);
-                SummaryVectorHeader packet_SMV;
+                VehiclePathVectorHeader packet_SMV;
                 packet->RemoveHeader(packet_SMV);
-                SendDisjointPackets(packet_SMV, sender);
+                SendDisjointVehiclePath(packet_SMV, sender);
 
             } else {
                 NS_LOG_LOGIC("Unknown MessageType packet ");
