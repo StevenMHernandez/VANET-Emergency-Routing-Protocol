@@ -30,6 +30,7 @@ class Vehicle:
         """Updates state of vehicle with respect to current time."""
 
         self._update_pos(time)
+        print(f't = {time}, v{self.id}: on {self.cur_road.name}, {self.cur_pos}')
 
     def _update_pos(self, time):
         """Updates position of vehicle with respect to current time."""
@@ -47,18 +48,25 @@ class Vehicle:
         else:
             self.at_intersection = True
 
-    def _next_road(self):
-        """Small function to current road to next road."""
+        self.prev_time = time
 
-        self.route_index += 1
+    def _next_road(self):
+        """Moves vehicle to next road in route.
+
+        Vehicle is restarted at the beginning of the route if it is
+        currently at the end of the list.
+        """
+
+        self.route_index = (self.route_index + 1) % len(self.route)
         self.cur_road = self.route[self.route_index]
 
 
 def build_vehicle_net(filepath, road_map):
-    """Builds a Vehicle object from file.
+    """Builds a List of Vehicle object from file.
 
     :param filepath: path to file
     :param road_map: graph of the road network
+    :return List of Vehicle objects
     """
 
     ret_list = []
