@@ -46,10 +46,7 @@ class Vehicle:
 
         self.cur_pos += d_pos
 
-        if self.cur_pos <= road_net.INTERSECTION_RADIUS:
-            self.at_intersection = True
-        else:
-            self.at_intersection = True
+        self.at_intersection = self.cur_pos <= road_net.INTERSECTION_RADIUS
 
         self.prev_time = time
 
