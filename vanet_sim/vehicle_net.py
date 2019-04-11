@@ -78,7 +78,7 @@ def build_vehicle_net(filepath, road_map):
             route = []
 
             for road in row[1].split(','):
-                route.append(road_map[road])
+                route.append(road_map.road_dict[road])
 
             ret_list.append(Vehicle(node_id=int(row[0]), route=route))
 
