@@ -3,6 +3,7 @@
 __author__ = 'Adam Morrissett', 'Steven M. Hernandez'
 
 from vanet_sim.evaluation import Evaluations
+from vanet_sim.routing.urban_routing_protocol import UrbanRoutingProtocol
 
 
 class Simulation:
@@ -21,11 +22,28 @@ class Simulation:
         self.vehicle_net = vehicle_net
 
     def step(self):
+        # Update vehicle locations first
         for vehicle in self.vehicle_net:
             vehicle.update_location(self.cur_time)
 
+        # Collect list of neighbors
         for vehicle in self.vehicle_net:
             vehicle.update_neighbors(self.vehicle_net)
+
+        # Find the current forwarders
+        current_forwarders = []
+        for vehicle in self.vehicle_net:
+            if vehicle.is_current_forwarder:
+                current_forwarders.append(vehicle)
+
+        # Route the message from the current forwarder
+        for f_curr in current_forwarders:
+            protocol = UrbanRoutingProtocol
+            f_next = protocol.choose_next_forwarder(f_curr.neighbors)
+            if f_next is not None:
+                self.vehicle_net[f_curr.id - 1].is_current_forwarder = False
+                self.vehicle_net[f_next.id - 1].received_at = self.cur_time
+                self.vehicle_net[f_next.id - 1].is_current_forwarder = True
 
         print(Evaluations.run(self.cur_time, self.vehicle_net))
 
