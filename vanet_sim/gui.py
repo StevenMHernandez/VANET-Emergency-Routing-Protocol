@@ -1,9 +1,16 @@
-import math
+"""Contains all graphical user interface (GUI) code."""
+
+
+__author__ = 'Adam Morrissett'
+
+
 import tkinter as tk
 
 from vanet_sim import vehicle_net, road_net
 
-NODE_DIAMETER = 20
+
+_GUI_REFRESH_PERIOD = 500  # GUI refresh period in ms
+_NODE_DIAMETER = 20  # Diameter of node widgets on GUI
 
 
 class MapFrame(tk.Frame):
@@ -27,107 +34,97 @@ class MapFrame(tk.Frame):
 
     def _draw_map(self):
         """Draws the road map."""
+
         for key in self.road_map.road_dict:
-            road = self.road_map.road_dict[key]
+            r = self.road_map.road_dict[key]
 
-            x1 = (NODE_DIAMETER / 2) + road.start_node.x_pos
-            y1 = (NODE_DIAMETER / 2) + road.start_node.y_pos
-            x2 = (NODE_DIAMETER / 2) + road.end_node.x_pos
-            y2 = (NODE_DIAMETER / 2) + road.end_node.y_pos
+            x1 = (_NODE_DIAMETER / 2) + r.start_node.x_pos
+            y1 = (_NODE_DIAMETER / 2) + r.start_node.y_pos
+            x2 = (_NODE_DIAMETER / 2) + r.end_node.x_pos
+            y2 = (_NODE_DIAMETER / 2) + r.end_node.y_pos
 
-            if road.is_obstructed:
+            if r.is_obstructed:
                 self.canvas.create_line(x1, y1, x2, y2, fill='red')
             else:
                 self.canvas.create_line(x1, y1, x2, y2, fill='black')
 
         for key in self.road_map.int_dict:
-            intsct = self.road_map.int_dict[key]
+            i = self.road_map.int_dict[key]
 
-            x1 = intsct.x_pos
-            y1 = intsct.y_pos
-            x2 = intsct.x_pos + NODE_DIAMETER
-            y2 = intsct.y_pos + NODE_DIAMETER
+            x1 = i.x_pos
+            y1 = i.y_pos
+            x2 = i.x_pos + _NODE_DIAMETER
+            y2 = i.y_pos + _NODE_DIAMETER
 
             self.canvas.create_oval(x1, y1, x2, y2, fill='#FFFFFF')
 
-            x = (NODE_DIAMETER / 2) + intsct.x_pos
-            y = (NODE_DIAMETER / 2) + intsct.y_pos
+            x = (_NODE_DIAMETER / 2) + i.x_pos
+            y = (_NODE_DIAMETER / 2) + i.y_pos
 
-            self.canvas.create_text(x, y, text=intsct.name)
+            self.canvas.create_text(x, y, text=i.name)
 
     def _calc_canvas_bounds(self):
+        """Calculates the minimum canvas size to fit road network."""
+
         max_x = 0
         max_y = 0
 
         for key in self.road_map.int_dict:
-            intsct = self.road_map.int_dict[key]
+            i = self.road_map.int_dict[key]
 
-            if intsct.x_pos > max_x:
-                max_x = intsct.x_pos
+            if i.x_pos > max_x:
+                max_x = i.x_pos
 
-            if intsct.y_pos > max_y:
-                max_y = intsct.y_pos
+            if i.y_pos > max_y:
+                max_y = i.y_pos
 
-        return max_x + NODE_DIAMETER, max_y + NODE_DIAMETER
+        return max_x + _NODE_DIAMETER, max_y + _NODE_DIAMETER
 
     def _draw_vehicles(self):
-        for vehicle in vehicles:
-            cur_road = self.road_map.road_dict[vehicle.cur_road.name]
-            cur_node_x = cur_road.start_node.x_pos
-            cur_node_y = cur_road.start_node.y_pos
+        """Draws all vehicles in their starting positions."""
 
-            x0 = cur_node_x + (NODE_DIAMETER / 2) - 5
-            y0 = cur_node_y + (NODE_DIAMETER / 2) - 5
-            x1 = cur_node_x + (NODE_DIAMETER / 2) + 5
-            y1 = cur_node_y + (NODE_DIAMETER / 2) + 5
+        for v in vehicles:
+            x0 = v.x + (_NODE_DIAMETER / 2) - 5
+            y0 = v.y + (_NODE_DIAMETER / 2) - 5
+            x1 = v.x + (_NODE_DIAMETER / 2) + 5
+            y1 = v.y + (_NODE_DIAMETER / 2) + 5
 
-            self.vehicle_widgets[vehicle.id] = self.canvas.create_oval(
+            self.vehicle_widgets[v.id] = self.canvas.create_oval(
                 x0, y0, x1, y1, fill='#FFA500')
 
     def _redraw_vehicle(self):
-        for vehicle in self.vehicles:
-            w_id = self.vehicle_widgets[vehicle.id]
-            cur_w_pos = self.canvas.coords(w_id)
-            x0 = (cur_w_pos[0] + cur_w_pos[2]) / 2
-            y0 = (cur_w_pos[1] + cur_w_pos[3]) / 2
-            x1, y1 = self._get_abs_pos_delta(vehicle)
-            d_x = x1 - x0
-            d_y = y1 - y0
+        for v in self.vehicles:
+            w_id = self.vehicle_widgets[v.id]
+            w_pos = self.canvas.coords(w_id)
+
+            # Movement updates are based on widget midpoints
+            mid_x0 = (w_pos[0] + w_pos[2]) / 2
+            mid_y0 = (w_pos[1] + w_pos[3]) / 2
+            mid_x1 = v.x + _NODE_DIAMETER / 2
+            mid_y1 = v.y + _NODE_DIAMETER / 2
+
+            d_x = mid_x1 - mid_x0
+            d_y = mid_y1 - mid_y0
 
             self.canvas.move(w_id, d_x, d_y)
 
-    def _get_abs_pos_delta(self, vehicle):
-        cur_road = self.road_map.road_dict[vehicle.cur_road.name]
-        past_node_x = cur_road.start_node.x_pos
-        past_node_y = cur_road.start_node.y_pos
-
-        next_node_x = cur_road.end_node.x_pos
-        next_node_y = cur_road.end_node.y_pos
-
-        angle = math.atan2((next_node_y - past_node_y),
-                           (next_node_x - past_node_x))
-
-        d_x = vehicle.cur_pos * math.cos(angle) + past_node_x
-        d_y = vehicle.cur_pos * math.sin(angle) + past_node_y
-
-        return d_x + NODE_DIAMETER / 2, d_y + NODE_DIAMETER / 2
-
     def step_sim(self):
-        for vehicle in self.vehicles:
-            vehicle.update_location(self.cur_time)
+        """Updates the simulation, redraws the GUI, and """
+        for v in self.vehicles:
+            v.update_location(self.cur_time)
             self._redraw_vehicle()
 
         if self.cur_time < self.time_dur:
             self.cur_time += self.d_time
             self.canvas.update()
-            self.canvas.after(500, self.step_sim)
+            self.canvas.after(_GUI_REFRESH_PERIOD, self.step_sim)
 
 
 if __name__ == '__main__':
     road_map = road_net.RoadMap(intersection_file='intersections.csv',
                                 road_file='roads.csv')
 
-    vehicles = vehicle_net.build_vehicle_net(filepath='vehicles2.csv',
+    vehicles = vehicle_net.build_vehicle_net(filepath='vehicles.csv',
                                              road_map=road_map)
 
     root = tk.Tk()

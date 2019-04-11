@@ -1,8 +1,9 @@
 """Contains code to run the simulations."""
 
-__author__ = 'Adam Morrissett'
+__author__ = 'Adam Morrissett', 'Steven M. Hernandez'
 
 from vanet_sim.evaluation import Evaluations
+
 
 class Simulation:
     """Performs a simulation."""

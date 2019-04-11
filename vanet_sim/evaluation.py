@@ -1,3 +1,6 @@
+__author__ = 'Steven M. Hernandez'
+
+
 class Evaluations:
     @staticmethod
     def get_num_affected(vehicle_net):

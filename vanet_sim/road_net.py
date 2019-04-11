@@ -91,6 +91,11 @@ class Road:
         self.spd_lim = spd_lim
         self.is_obstructed = is_obstructed
 
+        if self.is_obstructed:
+            self.obstruction_pos = self.length / 2
+        else:
+            self.obstruction_pos = -1
+
 
 class Intersection:
     """Plain old data (POD) object for an intersection."""
