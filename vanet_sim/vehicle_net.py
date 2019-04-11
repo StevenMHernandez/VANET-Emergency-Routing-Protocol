@@ -26,6 +26,9 @@ class Vehicle:
         self.prev_time = 0
         self.congestion_detected = False
 
+        self.affected_at = None
+        self.received_at = None
+
     def update(self, time):
         """Updates state of vehicle with respect to current time."""
 
