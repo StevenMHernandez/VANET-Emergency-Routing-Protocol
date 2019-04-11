@@ -9,8 +9,15 @@ import tkinter as tk
 from vanet_sim import vehicle_net, road_net, simulation
 
 
-_GUI_REFRESH_PERIOD = 50  # GUI refresh period in ms
-_NODE_DIAMETER = 20  # Diameter of node widgets on GUI
+_GUI_REFRESH_PERIOD = 150  # GUI refresh period in ms
+_NODE_DIAMETER = 25  # Diameter of node widgets on GUI
+_PADDING = 25  # Padding around canvas to prevent cropping
+
+VEHICLE_COLOR_DEFAULT = '#FFA500'
+VEHICLE_COLOR_AFFECTED = "#000000"
+VEHICLE_COLOR_RECEIVED_BEFORE_AFFECTED = "#999999"
+VEHICLE_COLOR_CURRENT_FORWARDER = "#00FF00"
+VEHICLE_COLOR_RECEIVED_EARLY = "#00A500"
 
 
 class MapFrame(tk.Frame):
@@ -44,9 +51,9 @@ class MapFrame(tk.Frame):
             y2 = (_NODE_DIAMETER / 2) + r.end_node.y_pos
 
             if r.is_obstructed:
-                self.canvas.create_line(x1, y1, x2, y2, fill='red')
+                self.canvas.create_line(x1 + _PADDING, y1 + _PADDING, x2 + _PADDING, y2 + _PADDING, fill='red')
             else:
-                self.canvas.create_line(x1, y1, x2, y2, fill='black')
+                self.canvas.create_line(x1 + _PADDING, y1 + _PADDING, x2 + _PADDING, y2 + _PADDING, fill='black')
 
         # Intersections are drawn after roads so the road lines do not
         # cut into the intersection widgets.
@@ -58,12 +65,12 @@ class MapFrame(tk.Frame):
             x2 = i.x_pos + _NODE_DIAMETER
             y2 = i.y_pos + _NODE_DIAMETER
 
-            self.canvas.create_oval(x1, y1, x2, y2, fill='#FFFFFF')
+            self.canvas.create_oval(x1 + _PADDING, y1 + _PADDING, x2 + _PADDING, y2 + _PADDING, fill='#FFFFFF')
 
             x = (_NODE_DIAMETER / 2) + i.x_pos
             y = (_NODE_DIAMETER / 2) + i.y_pos
 
-            self.canvas.create_text(x, y, text=i.name)
+            self.canvas.create_text(x + _PADDING, y + _PADDING, text=i.name)
 
     def _calc_canvas_bounds(self):
         """Calculates the minimum canvas size to fit road network."""
@@ -80,7 +87,7 @@ class MapFrame(tk.Frame):
             if i.y_pos > max_y:
                 max_y = i.y_pos
 
-        return max_x + _NODE_DIAMETER, max_y + _NODE_DIAMETER
+        return max_x + _NODE_DIAMETER + (2 * _PADDING), max_y + _NODE_DIAMETER + (2 * _PADDING)
 
     def _draw_vehicles(self):
         """Draws all vehicles in their starting positions."""
@@ -92,7 +99,7 @@ class MapFrame(tk.Frame):
             y1 = v.y + (_NODE_DIAMETER / 2) + 5
 
             self.vehicle_widgets[v.id] = self.canvas.create_oval(
-                x0, y0, x1, y1, fill='#FFA500')
+                x0 + _PADDING, y0 + _PADDING, x1 + _PADDING, y1 + _PADDING, fill=VEHICLE_COLOR_DEFAULT)
 
     def _redraw_vehicles(self):
         for v in self.vehicles:
@@ -108,7 +115,20 @@ class MapFrame(tk.Frame):
             d_x = mid_x1 - mid_x0
             d_y = mid_y1 - mid_y0
 
-            self.canvas.move(w_id, d_x, d_y)
+            self.canvas.move(w_id, d_x + _PADDING, d_y + _PADDING)
+
+            fill_color = None
+            if v.is_current_forwarder:
+                fill_color = VEHICLE_COLOR_CURRENT_FORWARDER
+            elif v.affected_at is not None and v.received_at is not None and v.affected_at < v.received_at:
+                fill_color = VEHICLE_COLOR_RECEIVED_BEFORE_AFFECTED
+            elif v.affected_at is not None and v.received_at is None:
+                fill_color = VEHICLE_COLOR_AFFECTED
+            elif v.received_at is not None and v.affected_at is None:
+                fill_color = VEHICLE_COLOR_RECEIVED_EARLY
+
+            if fill_color is not None:
+                self.canvas.itemconfig(w_id, fill=fill_color)
 
     def step_sim(self):
         """Steps simulation and updates GUI."""
@@ -122,10 +142,10 @@ class MapFrame(tk.Frame):
 
 
 if __name__ == '__main__':
-    road_map = road_net.RoadMap(intersection_file='intersections.csv',
-                                road_file='roads.csv')
+    road_map = road_net.RoadMap(intersection_file='../intersections.csv',
+                                road_file='../roads.csv')
 
-    vehicles = vehicle_net.build_vehicle_net(filepath='vehicles.csv',
+    vehicles = vehicle_net.build_vehicle_net(filepath='../vehicles.csv',
                                              road_map=road_map)
 
     root = tk.Tk()

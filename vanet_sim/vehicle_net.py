@@ -10,7 +10,7 @@ import math
 from vanet_sim import road_net
 
 
-COMMUNICATION_RADIUS = 20
+COMMUNICATION_RADIUS = 150
 
 
 class Vehicle:
@@ -29,6 +29,7 @@ class Vehicle:
         self.spd = self.cur_road.spd_lim
         self.cur_pos = 0
         self.at_intersection = False
+        self.is_current_forwarder = False
 
         self.x = 0
         self.y = 0
@@ -67,7 +68,7 @@ class Vehicle:
             self.affected_at = time
         elif self.cur_pos + d_pos >= self.cur_road.length:
             d_pos -= self.cur_road.length
-            self._next_road()
+            self._next_road(time)
 
         self.cur_pos += d_pos
 
@@ -85,7 +86,7 @@ class Vehicle:
 
         self.prev_time = time
 
-    def _next_road(self):
+    def _next_road(self, time):
         """Moves vehicle to next road in route.
 
         Vehicle is restarted at the beginning of the route if it is
@@ -97,6 +98,16 @@ class Vehicle:
         self.route_index = (self.route_index + 1) % len(self.route)
         self.cur_road = self.route[self.route_index]
         self.spd = self.cur_road.spd_lim
+
+        if self.cur_road.is_obstructed:
+            self.affected_at = time
+
+            # If a vehicle becomes obstructed without receiving warning,
+            # it becomes the current forwarder. We might consider
+            # different logic here. Should only one current forwarder be
+            # allowed for example.
+            if self.received_at is None:
+                self.is_current_forwarder = True
 
     def update_neighbors(self, vehicle_net):
         """ Updates the list of neighbors that the vehicle sees.
