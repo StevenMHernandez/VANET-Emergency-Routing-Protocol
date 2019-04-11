@@ -20,6 +20,7 @@ class Vehicle:
         :param node_id: ID number of vehicle
         :param route: list of Roads on which the vehicle travels
         """
+
         self.id = node_id
         self.route = route
 
@@ -40,6 +41,8 @@ class Vehicle:
 
         self.is_affected = False
         self.affected_at = None
+
+        self.message_received = False
         self.received_at = None
 
     def update_location(self, time):
@@ -47,11 +50,15 @@ class Vehicle:
 
         Each vehicle has 2 positions: relative to intersections and
         absolute with respect to the map.
+
+        :param time: current simulation time
+        :return: None
         """
 
         d_pos = (time - self.prev_time) * self.spd
 
-        # Vehicle may have moved to new road by next sim time.
+        # Vehicle may have moved to new road or stopped at incident
+        # by next sim time.
         if (self.cur_road.is_obstructed
                 and self.cur_pos + d_pos >= self.cur_road.obstruction_pos):
             d_pos = 0
@@ -66,8 +73,8 @@ class Vehicle:
 
         self.at_intersection = self.cur_pos <= road_net.INTERSECTION_RADIUS
 
-        # Abs positioning helps for determining neighbors and placement
-        # on GUI.
+        # Absolute positioning helps for determining neighbors and
+        # placement on GUI.
         x_range = self.cur_road.end_node.x_pos - self.cur_road.start_node.x_pos
         y_range = self.cur_road.end_node.y_pos - self.cur_road.start_node.y_pos
 
@@ -78,13 +85,13 @@ class Vehicle:
 
         self.prev_time = time
 
-        print(f't = {time}, v{self.id}: on {self.cur_road.name}, {self.cur_pos}')
-
     def _next_road(self):
         """Moves vehicle to next road in route.
 
         Vehicle is restarted at the beginning of the route if it is
         currently at the end of the route list.
+
+        :return: None
         """
 
         self.route_index = (self.route_index + 1) % len(self.route)
@@ -92,17 +99,24 @@ class Vehicle:
         self.spd = self.cur_road.spd_lim
 
     def update_neighbors(self, vehicle_net):
-        """Updates the list of neighbors that the vehicle sees."""
+        """ Updates the list of neighbors that the vehicle sees.
+
+        :param vehicle_net: the vehicle network
+        :return: None
+        """
 
         self.neighbors = []
+
         for v in vehicle_net:
-            if v.id != self.id and v.distance(self) < COMMUNICATION_RADIUS:
+            if (v.id != self.id
+                    and _calc_distance(self, v) < COMMUNICATION_RADIUS):
                 self.neighbors.append(v)
 
-    def distance(self, v):
-        """Calculates the distance to another vehicle."""
-
-        return math.sqrt((self.x - v.x)**2 + (self.y - v.y)**2)
+    def update_routing(self):
+        if self.is_affected:
+            for v in self.neighbors:
+                if v.is_affected:
+                    _send_message(v)
 
 
 def build_vehicle_net(filepath, road_map):
@@ -127,3 +141,24 @@ def build_vehicle_net(filepath, road_map):
             ret_list.append(Vehicle(node_id=int(row[0]), route=route))
 
     return ret_list
+
+
+def _calc_distance(v0, v1):
+    """Calculates the distance between two vehicles.
+
+    :param v0: first vehicle
+    :param v1: second vehicle
+    :return: the Euclidean distance between vehicles
+    """
+
+    return math.sqrt((v1.x - v0.x)**2 + (v1.y - v0.y)**2)
+
+
+def _send_message(vehicle):
+    """Sends a message to the specified vehicle
+
+    :param vehicle: the recipient of the message
+    :return: None
+    """
+
+    vehicle.message_received = True

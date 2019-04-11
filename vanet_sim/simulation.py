@@ -21,6 +21,8 @@ class Simulation:
         self.vehicle_net = vehicle_net
 
     def step(self):
+        """Progresses the simulation forward by one time derivative."""
+
         for vehicle in self.vehicle_net:
             vehicle.update_location(self.cur_time)
 
