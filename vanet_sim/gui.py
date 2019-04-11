@@ -1,7 +1,7 @@
 import math
 import tkinter as tk
 
-from vanet_sim import vehicle_net, road_net
+from vanet_sim import vehicle_net, road_net, simulation
 
 NODE_DIAMETER = 20
 
@@ -10,12 +10,10 @@ class MapFrame(tk.Frame):
     def __init__(self, master, d_time, time_dur, road_map, vehicles, *args,
                  **kwargs):
         super(MapFrame, self).__init__(master, *args, **kwargs)
-        self.d_time = d_time
         self.time_dur = time_dur
         self.road_map = road_map
         self.vehicles = vehicles
 
-        self.cur_time = 0
         self.vehicle_widgets = {}
 
         c_width, c_height = self._calc_canvas_bounds()
@@ -24,6 +22,10 @@ class MapFrame(tk.Frame):
 
         self._draw_map()
         self._draw_vehicles()
+
+        self.simulator = simulation.Simulation(d_time=d_time,
+                                               road_map=road_map,
+                                               vehicle_net=vehicles)
 
     def _draw_map(self):
         """Draws the road map."""
@@ -113,14 +115,13 @@ class MapFrame(tk.Frame):
         return d_x + NODE_DIAMETER / 2, d_y + NODE_DIAMETER / 2
 
     def step_sim(self):
-        for vehicle in self.vehicles:
-            vehicle.update_location(self.cur_time)
-            self._redraw_vehicle()
+        self.simulator.step()
 
-        if self.cur_time < self.time_dur:
-            self.cur_time += self.d_time
+        self._redraw_vehicle()
+
+        if self.simulator.cur_time < self.time_dur:
             self.canvas.update()
-            self.canvas.after(500, self.step_sim)
+            self.canvas.after(50, self.step_sim)
 
 
 if __name__ == '__main__':
@@ -132,13 +133,8 @@ if __name__ == '__main__':
 
     root = tk.Tk()
     root.title('PySim')
-    frame = MapFrame(root, d_time=1, time_dur=100,
+    frame = MapFrame(root, d_time=1, time_dur=50,
                      road_map=road_map, vehicles=vehicles)
     frame.pack()
     frame.step_sim()
     root.mainloop()
-
-    # sim = simulation.Simulation(d_time=0.5,
-    #                             road_map=road_map,
-    #                             vehicle_net=vehicles)
-    # sim.run(time_duration=10)

@@ -19,6 +19,17 @@ class Simulation:
         self.road_net = road_map
         self.vehicle_net = vehicle_net
 
+    def step(self):
+        for vehicle in self.vehicle_net:
+            vehicle.update_location(self.cur_time)
+
+        for vehicle in self.vehicle_net:
+            vehicle.update_neighbors(self.vehicle_net)
+
+        print(Evaluations.run(self.cur_time, self.vehicle_net))
+
+        self.cur_time += self.d_time
+
     def run(self, time_duration):
         """Executes the simulation for the specified duration.
 
@@ -28,12 +39,4 @@ class Simulation:
         print(f'Starting simulation from t = {self.cur_time:.3f}')
 
         while self.cur_time < time_duration:
-            for vehicle in self.vehicle_net:
-                vehicle.update_location(self.cur_time)
-
-            for vehicle in self.vehicle_net:
-                vehicle.update_neighbors(self.vehicle_net)
-
-            print(Evaluations.run(self.cur_time, self.vehicle_net))
-
-            self.cur_time += self.d_time
+            self.step()
