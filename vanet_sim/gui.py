@@ -1,7 +1,7 @@
 """Contains all graphical user interface (GUI) code."""
 
 
-__author__ = 'Adam Morrissett'
+__author__ = 'Adam Morrissett', 'Steven M. Hernandez'
 
 
 import tkinter as tk

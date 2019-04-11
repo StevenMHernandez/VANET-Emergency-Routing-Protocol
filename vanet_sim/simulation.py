@@ -22,18 +22,19 @@ class Simulation:
         self.vehicle_net = vehicle_net
 
     def step(self):
-<<<<<<< HEAD
         """Progresses the simulation forward by one time derivative."""
 
-=======
         # Update vehicle locations first
->>>>>>> f2eb4b098e4fe245f7859a011ee7ab6da3a5c0de
         for vehicle in self.vehicle_net:
             vehicle.update_location(self.cur_time)
 
         # Collect list of neighbors
         for vehicle in self.vehicle_net:
             vehicle.update_neighbors(self.vehicle_net)
+
+        # Update the routing state
+        for v in self.vehicle_net:
+            v.update_routing()
 
         # Find the current forwarders
         current_forwarders = []

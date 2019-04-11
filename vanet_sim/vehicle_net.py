@@ -40,10 +40,7 @@ class Vehicle:
 
         self.neighbors = []
 
-        self.is_affected = False
         self.affected_at = None
-
-        self.message_received = False
         self.received_at = None
 
     def update_location(self, time):
@@ -64,11 +61,10 @@ class Vehicle:
                 and self.cur_pos + d_pos >= self.cur_road.obstruction_pos):
             d_pos = 0
             self.spd = 0.0
-            self.is_affected = True
             self.affected_at = time
         elif self.cur_pos + d_pos >= self.cur_road.length:
             d_pos -= self.cur_road.length
-            self._next_road(time)
+            self._next_road()
 
         self.cur_pos += d_pos
 
@@ -86,7 +82,7 @@ class Vehicle:
 
         self.prev_time = time
 
-    def _next_road(self, time):
+    def _next_road(self):
         """Moves vehicle to next road in route.
 
         Vehicle is restarted at the beginning of the route if it is
@@ -98,16 +94,6 @@ class Vehicle:
         self.route_index = (self.route_index + 1) % len(self.route)
         self.cur_road = self.route[self.route_index]
         self.spd = self.cur_road.spd_lim
-
-        if self.cur_road.is_obstructed:
-            self.affected_at = time
-
-            # If a vehicle becomes obstructed without receiving warning,
-            # it becomes the current forwarder. We might consider
-            # different logic here. Should only one current forwarder be
-            # allowed for example.
-            if self.received_at is None:
-                self.is_current_forwarder = True
 
     def update_neighbors(self, vehicle_net):
         """ Updates the list of neighbors that the vehicle sees.
@@ -124,10 +110,12 @@ class Vehicle:
                 self.neighbors.append(v)
 
     def update_routing(self):
-        if self.is_affected:
-            for v in self.neighbors:
-                if v.is_affected:
-                    _send_message(v)
+        # If a vehicle becomes obstructed without receiving warning,
+        # it becomes the current forwarder. We might consider
+        # different logic here. Should only one current forwarder be
+        # allowed for example.
+        if self.received_at is None:
+            self.is_current_forwarder = True
 
 
 def build_vehicle_net(filepath, road_map):
@@ -163,13 +151,3 @@ def _calc_distance(v0, v1):
     """
 
     return math.sqrt((v1.x - v0.x)**2 + (v1.y - v0.y)**2)
-
-
-def _send_message(vehicle):
-    """Sends a message to the specified vehicle
-
-    :param vehicle: the recipient of the message
-    :return: None
-    """
-
-    vehicle.message_received = True
