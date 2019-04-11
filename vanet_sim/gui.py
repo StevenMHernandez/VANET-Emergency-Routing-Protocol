@@ -119,7 +119,7 @@ class MapFrame(tk.Frame):
 
     def step_sim(self):
         for vehicle in self.vehicles:
-            vehicle.update(self.cur_time)
+            vehicle.update_location(self.cur_time)
             self._redraw_vehicle()
 
         if self.cur_time < self.time_dur:
