@@ -4,7 +4,7 @@
 
 ### Overview
 
-Network configuration settings are stored in three files: `vehicle.csv`, 
+Network configuration settings are stored in three files: `vehicles.csv`, 
 `roads.csv`, and `intersections.csv`.
 
 `intersections.csv` contains information about each intersection. The format 
@@ -16,7 +16,7 @@ The format for each line is:
 In the simulator, road names are the concatenation of the names of their 
 intersections.
 
-`vehicle.csv` contains vehicle-specific information like the node ID number and
+`vehicles.csv` contains vehicle-specific information like the node ID number and
 navigation route. The format for each line is: 
 `<node_id>;<road_1>,<road_2>,...,<road_n>`.
 
