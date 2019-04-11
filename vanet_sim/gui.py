@@ -10,7 +10,8 @@ from vanet_sim import vehicle_net, road_net, simulation
 
 
 _GUI_REFRESH_PERIOD = 150  # GUI refresh period in ms
-_NODE_DIAMETER = 25  # Diameter of node widgets on GUI
+_INTERSECTION_W_DIAMETER = 25  # Diameter of intersection widgets on GUI
+_VEHICLE_W_DIAMETER = 16  # Diameter of vehicle widgets on GUI
 _PADDING = 25  # Padding around canvas to prevent cropping
 
 VEHICLE_COLOR_DEFAULT = '#FFA500'
@@ -18,6 +19,8 @@ VEHICLE_COLOR_AFFECTED = "#000000"
 VEHICLE_COLOR_RECEIVED_BEFORE_AFFECTED = "#999999"
 VEHICLE_COLOR_CURRENT_FORWARDER = "#00FF00"
 VEHICLE_COLOR_RECEIVED_EARLY = "#00A500"
+WHITE = '#FFFFFF'
+BLACK = '#000000'
 
 
 class MapFrame(tk.Frame):
@@ -45,10 +48,10 @@ class MapFrame(tk.Frame):
         for key in self.road_map.road_dict:
             r = self.road_map.road_dict[key]
 
-            x1 = (_NODE_DIAMETER / 2) + r.start_node.x_pos
-            y1 = (_NODE_DIAMETER / 2) + r.start_node.y_pos
-            x2 = (_NODE_DIAMETER / 2) + r.end_node.x_pos
-            y2 = (_NODE_DIAMETER / 2) + r.end_node.y_pos
+            x1 = (_INTERSECTION_W_DIAMETER / 2) + r.start_node.x_pos
+            y1 = (_INTERSECTION_W_DIAMETER / 2) + r.start_node.y_pos
+            x2 = (_INTERSECTION_W_DIAMETER / 2) + r.end_node.x_pos
+            y2 = (_INTERSECTION_W_DIAMETER / 2) + r.end_node.y_pos
 
             if r.is_obstructed:
                 self.canvas.create_line(x1 + _PADDING, y1 + _PADDING,
@@ -66,15 +69,15 @@ class MapFrame(tk.Frame):
 
             x1 = i.x_pos
             y1 = i.y_pos
-            x2 = i.x_pos + _NODE_DIAMETER
-            y2 = i.y_pos + _NODE_DIAMETER
+            x2 = i.x_pos + _INTERSECTION_W_DIAMETER
+            y2 = i.y_pos + _INTERSECTION_W_DIAMETER
 
             self.canvas.create_oval(x1 + _PADDING, y1 + _PADDING,
                                     x2 + _PADDING, y2 + _PADDING,
                                     fill='#FFFFFF')
 
-            x = (_NODE_DIAMETER / 2) + i.x_pos
-            y = (_NODE_DIAMETER / 2) + i.y_pos
+            x = (_INTERSECTION_W_DIAMETER / 2) + i.x_pos
+            y = (_INTERSECTION_W_DIAMETER / 2) + i.y_pos
 
             self.canvas.create_text(x + _PADDING, y + _PADDING, text=i.name)
 
@@ -93,52 +96,67 @@ class MapFrame(tk.Frame):
             if i.y_pos > max_y:
                 max_y = i.y_pos
 
-        return (max_x + _NODE_DIAMETER + (2 * _PADDING),
-                max_y + _NODE_DIAMETER + (2 * _PADDING))
+        return (max_x + _INTERSECTION_W_DIAMETER + (2 * _PADDING),
+                max_y + _INTERSECTION_W_DIAMETER + (2 * _PADDING))
 
     def _draw_vehicles(self):
         """Draws all vehicles in their starting positions."""
 
         for v in vehicles:
-            x0 = v.x + (_NODE_DIAMETER / 2) - 5
-            y0 = v.y + (_NODE_DIAMETER / 2) - 5
-            x1 = v.x + (_NODE_DIAMETER / 2) + 5
-            y1 = v.y + (_NODE_DIAMETER / 2) + 5
+            x0 = v.x + (_INTERSECTION_W_DIAMETER / 2) - _VEHICLE_W_DIAMETER / 2
+            y0 = v.y + (_INTERSECTION_W_DIAMETER / 2) - _VEHICLE_W_DIAMETER / 2
+            x1 = v.x + (_INTERSECTION_W_DIAMETER / 2) + _VEHICLE_W_DIAMETER / 2
+            y1 = v.y + (_INTERSECTION_W_DIAMETER / 2) + _VEHICLE_W_DIAMETER / 2
 
-            self.vehicle_widgets[v.id] = self.canvas.create_oval(
+            o_id = self.canvas.create_oval(
                 x0 + _PADDING, y0 + _PADDING, x1 + _PADDING, y1 + _PADDING,
                 fill=VEHICLE_COLOR_DEFAULT)
 
+            x = v.x + (_INTERSECTION_W_DIAMETER / 2)
+            y = v.y + (_INTERSECTION_W_DIAMETER / 2)
+
+            t_id = self.canvas.create_text(x + _PADDING, y + _PADDING,
+                                           text=v.id)
+
+            self.vehicle_widgets[v.id] = (o_id, t_id)
+
     def _redraw_vehicles(self):
         for v in self.vehicles:
-            w_id = self.vehicle_widgets[v.id]
-            w_pos = self.canvas.coords(w_id)
+            w_ids = self.vehicle_widgets[v.id]
+            o_pos = self.canvas.coords(w_ids[0])
 
             # Movement updates are based on widget midpoints
-            mid_x0 = (w_pos[0] + w_pos[2]) / 2
-            mid_y0 = (w_pos[1] + w_pos[3]) / 2
-            mid_x1 = v.x + _NODE_DIAMETER / 2
-            mid_y1 = v.y + _NODE_DIAMETER / 2
+            o_mid_x0 = (o_pos[0] + o_pos[2]) / 2
+            o_mid_y0 = (o_pos[1] + o_pos[3]) / 2
+            o_mid_x1 = v.x + _INTERSECTION_W_DIAMETER / 2
+            o_mid_y1 = v.y + _INTERSECTION_W_DIAMETER / 2
 
-            d_x = mid_x1 - mid_x0
-            d_y = mid_y1 - mid_y0
+            o_d_x = o_mid_x1 - o_mid_x0
+            o_d_y = o_mid_y1 - o_mid_y0
 
-            self.canvas.move(w_id, d_x + _PADDING, d_y + _PADDING)
+            self.canvas.move(w_ids[0], o_d_x + _PADDING, o_d_y + _PADDING)
+            self.canvas.move(w_ids[1], o_d_x + _PADDING, o_d_y + _PADDING)
 
             fill_color = None
+            text_color = None
             if v.is_current_forwarder:
                 fill_color = VEHICLE_COLOR_CURRENT_FORWARDER
+                text_color = BLACK
             elif (v.affected_at is not None
                   and v.received_at is not None
                   and v.affected_at < v.received_at):
                 fill_color = VEHICLE_COLOR_RECEIVED_BEFORE_AFFECTED
+                text_color = BLACK
             elif v.affected_at is not None and v.received_at is None:
                 fill_color = VEHICLE_COLOR_AFFECTED
+                text_color = WHITE
             elif v.received_at is not None and v.affected_at is None:
                 fill_color = VEHICLE_COLOR_RECEIVED_EARLY
+                text_color = BLACK
 
             if fill_color is not None:
-                self.canvas.itemconfig(w_id, fill=fill_color)
+                self.canvas.itemconfig(w_ids[0], fill=fill_color)
+                self.canvas.itemconfig(w_ids[1], fill=text_color)
 
     def step_sim(self):
         """Steps simulation and updates GUI."""
