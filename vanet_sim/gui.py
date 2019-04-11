@@ -26,12 +26,7 @@ class MapFrame(tk.Frame):
         self._draw_vehicles()
 
     def _draw_map(self):
-        """Draws the road map.
-
-        Note: The axes in the canvas are transposed from normal
-        conventions, so the x and y coordinates are flipped. In TK, the
-        vertical axis is x, and the horizontal axis is y.
-        """
+        """Draws the road map."""
         for key in self.road_map.road_dict:
             road = self.road_map.road_dict[key]
 
