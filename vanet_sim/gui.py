@@ -9,7 +9,7 @@ import tkinter as tk
 from vanet_sim import vehicle_net, road_net, simulation
 
 
-_GUI_REFRESH_PERIOD = 500  # GUI refresh period in ms
+_GUI_REFRESH_PERIOD = 50  # GUI refresh period in ms
 _NODE_DIAMETER = 20  # Diameter of node widgets on GUI
 
 
@@ -20,7 +20,9 @@ class MapFrame(tk.Frame):
         self.time_dur = time_dur
         self.road_map = road_map
         self.vehicles = vehicles
-
+        self.simulator = simulation.Simulation(d_time=d_time,
+                                               road_map=road_map,
+                                               vehicle_net=vehicles)
         self.vehicle_widgets = {}
 
         c_width, c_height = self._calc_canvas_bounds()
@@ -29,10 +31,6 @@ class MapFrame(tk.Frame):
 
         self._draw_map()
         self._draw_vehicles()
-
-        self.simulator = simulation.Simulation(d_time=d_time,
-                                               road_map=road_map,
-                                               vehicle_net=vehicles)
 
     def _draw_map(self):
         """Draws the road map."""
@@ -50,6 +48,8 @@ class MapFrame(tk.Frame):
             else:
                 self.canvas.create_line(x1, y1, x2, y2, fill='black')
 
+        # Intersections are drawn after roads so the road lines do not
+        # cut into the intersection widgets.
         for key in self.road_map.int_dict:
             i = self.road_map.int_dict[key]
 
@@ -94,7 +94,7 @@ class MapFrame(tk.Frame):
             self.vehicle_widgets[v.id] = self.canvas.create_oval(
                 x0, y0, x1, y1, fill='#FFA500')
 
-    def _redraw_vehicle(self):
+    def _redraw_vehicles(self):
         for v in self.vehicles:
             w_id = self.vehicle_widgets[v.id]
             w_pos = self.canvas.coords(w_id)
@@ -111,12 +111,13 @@ class MapFrame(tk.Frame):
             self.canvas.move(w_id, d_x, d_y)
 
     def step_sim(self):
-        """Updates the simulation, redraws the GUI, and """
-        self.simulator.step()
-        self._redraw_vehicle()
+        """Steps simulation and updates GUI."""
 
-        if self.simulator.cur_time < self.time_dur:
-            self.canvas.update()
+        self.simulator.step()
+        self._redraw_vehicles()
+        self.canvas.update()
+
+        if self.simulator.cur_time <= self.time_dur:
             self.canvas.after(_GUI_REFRESH_PERIOD, self.step_sim)
 
 
