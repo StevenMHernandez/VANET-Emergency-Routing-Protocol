@@ -79,7 +79,7 @@ class MapFrame(tk.Frame):
         for vehicle in vehicles:
             cur_road = self.road_map.road_dict[vehicle.cur_road.name]
             cur_node_x = cur_road.start_node.x_pos
-            cur_node_y = cur_road.start_node.x_pos
+            cur_node_y = cur_road.start_node.y_pos
 
             x0 = cur_node_x + (NODE_DIAMETER / 2) - 5
             y0 = cur_node_y + (NODE_DIAMETER / 2) - 5
