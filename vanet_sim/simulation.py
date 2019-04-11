@@ -2,6 +2,7 @@
 
 __author__ = 'Adam Morrissett'
 
+from vanet_sim.evaluation import Evaluations
 
 class Simulation:
     """Performs a simulation."""
@@ -28,6 +29,11 @@ class Simulation:
 
         while self.cur_time < time_duration:
             for vehicle in self.vehicle_net:
-                vehicle.update(self.cur_time)
+                vehicle.update_location(self.cur_time)
+
+            for vehicle in self.vehicle_net:
+                vehicle.update_neighbors(self.vehicle_net)
+
+            print(Evaluations.run(self.cur_time, self.vehicle_net))
 
             self.cur_time += self.d_time
