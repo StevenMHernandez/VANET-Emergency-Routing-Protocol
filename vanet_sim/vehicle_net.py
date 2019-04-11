@@ -114,7 +114,7 @@ class Vehicle:
         # it becomes the current forwarder. We might consider
         # different logic here. Should only one current forwarder be
         # allowed for example.
-        if self.received_at is None:
+        if self.received_at is None and self.received_at is not None:
             self.is_current_forwarder = True
 
 
