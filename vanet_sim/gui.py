@@ -9,8 +9,14 @@ import tkinter as tk
 from vanet_sim import vehicle_net, road_net, simulation
 
 
-_GUI_REFRESH_PERIOD = 50  # GUI refresh period in ms
+_GUI_REFRESH_PERIOD = 150  # GUI refresh period in ms
 _NODE_DIAMETER = 20  # Diameter of node widgets on GUI
+
+VEHICLE_COLOR_DEFAULT = '#FFA500'
+VEHICLE_COLOR_AFFECTED = "#000000"
+VEHICLE_COLOR_RECEIVED_BEFORE_AFFECTED = "#999999"
+VEHICLE_COLOR_CURRENT_FORWARDER = "#00FF00"
+VEHICLE_COLOR_RECEIVED_EARLY = "#00A500"
 
 
 class MapFrame(tk.Frame):
@@ -92,7 +98,7 @@ class MapFrame(tk.Frame):
             y1 = v.y + (_NODE_DIAMETER / 2) + 5
 
             self.vehicle_widgets[v.id] = self.canvas.create_oval(
-                x0, y0, x1, y1, fill='#FFA500')
+                x0, y0, x1, y1, fill=VEHICLE_COLOR_DEFAULT)
 
     def _redraw_vehicles(self):
         for v in self.vehicles:
@@ -110,6 +116,19 @@ class MapFrame(tk.Frame):
 
             self.canvas.move(w_id, d_x, d_y)
 
+            fill_color = None
+            if v.is_current_forwarder:
+                fill_color = VEHICLE_COLOR_CURRENT_FORWARDER
+            elif v.affected_at is not None and v.received_at is not None and v.affected_at < v.received_at:
+                fill_color = VEHICLE_COLOR_RECEIVED_BEFORE_AFFECTED
+            elif v.affected_at is not None and v.received_at is None:
+                fill_color = VEHICLE_COLOR_AFFECTED
+            elif v.received_at is not None and v.affected_at is None:
+                fill_color = VEHICLE_COLOR_RECEIVED_EARLY
+
+            if fill_color is not None:
+                self.canvas.itemconfig(w_id, fill=fill_color)
+
     def step_sim(self):
         """Steps simulation and updates GUI."""
 
@@ -122,10 +141,10 @@ class MapFrame(tk.Frame):
 
 
 if __name__ == '__main__':
-    road_map = road_net.RoadMap(intersection_file='intersections.csv',
-                                road_file='roads.csv')
+    road_map = road_net.RoadMap(intersection_file='../intersections.csv',
+                                road_file='../roads.csv')
 
-    vehicles = vehicle_net.build_vehicle_net(filepath='vehicles.csv',
+    vehicles = vehicle_net.build_vehicle_net(filepath='../vehicles.csv',
                                              road_map=road_map)
 
     root = tk.Tk()

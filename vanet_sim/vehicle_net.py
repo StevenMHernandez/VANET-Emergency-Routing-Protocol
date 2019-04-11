@@ -10,7 +10,7 @@ import math
 from vanet_sim import road_net
 
 
-COMMUNICATION_RADIUS = 20
+COMMUNICATION_RADIUS = 150
 
 
 class Vehicle:
