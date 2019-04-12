@@ -3,7 +3,7 @@
 __author__ = 'Adam Morrissett', 'Steven M. Hernandez'
 
 from vanet_sim.evaluation import Evaluations
-from vanet_sim.routing.urban_routing_protocol import UrbanRoutingProtocol
+from vanet_sim.routing.routing_protocols import UrbanRoutingProtocol, Epidemic
 
 
 class Simulation:
@@ -44,9 +44,11 @@ class Simulation:
 
         # Route the message from the current forwarder
         for f_curr in current_forwarders:
-            protocol = UrbanRoutingProtocol
-            f_next = protocol.choose_next_forwarder(f_curr.neighbors)
-            if f_next is not None:
+            # protocol = UrbanRoutingProtocol
+            protocol = Epidemic
+            next_forwarders = protocol.choose_next_forwarders(f_curr.neighbors)
+
+            for f_next in next_forwarders:
                 self.vehicle_net[f_curr.id - 1].is_current_forwarder = False
                 self.vehicle_net[f_next.id - 1].received_at = self.cur_time
                 self.vehicle_net[f_next.id - 1].is_current_forwarder = True
