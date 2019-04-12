@@ -1,14 +1,11 @@
 """Contains data structures for the vehicle network."""
 
-
 __author__ = 'Adam Morrissett', 'Steven M. Hernandez'
-
 
 import csv
 import math
 
 from vanet_sim import road_net
-
 
 COMMUNICATION_RADIUS = 150
 
@@ -125,12 +122,12 @@ class Vehicle:
                     and _calc_distance(self, v) < COMMUNICATION_RADIUS):
                 self.neighbors.append(v)
 
-    def update_routing(self):
+    def update_routing(self, time):
         # If a vehicle becomes obstructed without receiving warning,
         # it becomes the current forwarder. We might consider
         # different logic here. Should only one current forwarder be
         # allowed for example.
-        if self.received_at is None and self.received_at is not None:
+        if self.affected_at == time and self.received_at is None:
             self.is_current_forwarder = True
 
 
@@ -166,4 +163,4 @@ def _calc_distance(v0, v1):
     :return: the Euclidean distance between vehicles
     """
 
-    return math.sqrt((v1.x - v0.x)**2 + (v1.y - v0.y)**2)
+    return math.sqrt((v1.x - v0.x) ** 2 + (v1.y - v0.y) ** 2)
