@@ -143,10 +143,12 @@ class MapFrame(tk.Frame):
             if v.is_current_forwarder:
                 if v not in self.vehicle_radio_widgets:
                     r = vehicle_net.COMMUNICATION_RADIUS
-                    t_id = self.canvas.create_oval(v.x + _INTERSECTION_W_DIAMETER - r + _PADDING,
-                                                   v.y + _INTERSECTION_W_DIAMETER - r + _PADDING,
-                                                   v.x + r + _PADDING,
-                                                   v.y + r + _PADDING)
+                    t_id = self.canvas.create_oval(
+                        v.x + _INTERSECTION_W_DIAMETER - r + _PADDING,
+                        v.y + _INTERSECTION_W_DIAMETER - r + _PADDING,
+                        v.x + r + _PADDING,
+                        v.y + r + _PADDING)
+
                     self.vehicle_radio_widgets[v] = t_id
                 else:
                     t_id = self.vehicle_radio_widgets[v]
@@ -158,18 +160,17 @@ class MapFrame(tk.Frame):
 
             fill_color = None
             text_color = None
+
             if v.is_current_forwarder:
                 fill_color = VEHICLE_COLOR_CURRENT_FORWARDER
                 text_color = BLACK
-            elif (v.affected_at is not None
-                  and v.received_at is not None
-                  and v.affected_at > v.received_at):
+            elif v.received_before_affected:
                 fill_color = VEHICLE_COLOR_RECEIVED_BEFORE_AFFECTED
                 text_color = BLACK
-            elif v.affected_at is not None and v.received_at is None:
+            elif v.affected_not_received:
                 fill_color = VEHICLE_COLOR_AFFECTED
                 text_color = WHITE
-            elif v.received_at is not None and v.affected_at is None:
+            elif v.received_early:
                 fill_color = VEHICLE_COLOR_RECEIVED_EARLY
                 text_color = BLACK
 

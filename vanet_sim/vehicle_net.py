@@ -38,6 +38,10 @@ class Vehicle:
         self.affected_at = None
         self.received_at = None
 
+        self._received_before_affected = False  # Received msg before affected
+        self._affected_not_received = False  # Affected without receiving msg
+        self._received_early = False  # Received msg & not affected
+
         self.update_location(0)
 
     def update_location(self, time):
@@ -129,6 +133,31 @@ class Vehicle:
         # allowed for example.
         if self.affected_at == time and self.received_at is None:
             self.is_current_forwarder = True
+
+    @property
+    def received_before_affected(self):
+        return (self.affected_at is not None and self.received_at is not None
+                and self.affected_at > self.received_at)
+
+    @received_before_affected.setter
+    def received_before_affected(self, val):
+        self._received_before_affected = val
+
+    @property
+    def received_early(self):
+        return self.received_at is not None and self.affected_at is None
+
+    @received_early.setter
+    def received_early(self, val):
+        self._received_early = val
+
+    @property
+    def affected_not_received(self):
+        return self.affected_at is not None and self.received_at is None
+
+    @affected_not_received.setter
+    def affected_not_received(self, val):
+        self._affected_not_received = val
 
 
 def build_vehicle_net(filepath, road_map):
