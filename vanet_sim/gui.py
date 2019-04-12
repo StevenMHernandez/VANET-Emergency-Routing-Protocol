@@ -10,7 +10,7 @@ from vanet_sim import vehicle_net, road_net, simulation
 
 
 _GUI_REFRESH_PERIOD = 10  # GUI refresh period in ms
-_D_TIME = 0.1 # Simulation time resolution
+_D_TIME = 0.1  # Simulation time resolution
 _INTERSECTION_W_DIAMETER = 25  # Diameter of intersection widgets on GUI
 _VEHICLE_W_DIAMETER = 16  # Diameter of vehicle widgets on GUI
 _PADDING = 25  # Padding around canvas to prevent cropping
@@ -122,7 +122,6 @@ class MapFrame(tk.Frame):
 
             self.vehicle_widgets[v.id] = (o_id, t_id)
 
-
     def _redraw_vehicles(self):
         for v in self.vehicles:
             w_ids = self.vehicle_widgets[v.id]
@@ -164,7 +163,7 @@ class MapFrame(tk.Frame):
                 text_color = BLACK
             elif (v.affected_at is not None
                   and v.received_at is not None
-                  and v.affected_at < v.received_at):
+                  and v.affected_at > v.received_at):
                 fill_color = VEHICLE_COLOR_RECEIVED_BEFORE_AFFECTED
                 text_color = BLACK
             elif v.affected_at is not None and v.received_at is None:
