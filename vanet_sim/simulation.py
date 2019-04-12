@@ -34,7 +34,7 @@ class Simulation:
 
         # Update the routing state
         for v in self.vehicle_net:
-            v.update_routing()
+            v.update_routing(self.cur_time)
 
         # Find the current forwarders
         current_forwarders = []
