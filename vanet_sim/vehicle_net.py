@@ -62,7 +62,7 @@ class Vehicle:
 
         elif (self.cur_road.is_obstructed
                 and self.cur_pos + d_pos >= self.cur_road.obstruction_pos):
-            d_pos = self.cur_pos + d_pos - self.cur_road.obstruction_pos
+            d_pos = 0
             self.spd = 0.0
             self.affected_at = time
         elif self.cur_pos + d_pos >= self.cur_road.length:

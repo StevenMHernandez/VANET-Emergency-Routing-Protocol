@@ -9,8 +9,8 @@ import tkinter as tk
 from vanet_sim import vehicle_net, road_net, simulation
 
 
-_GUI_REFRESH_PERIOD = 150  # GUI refresh period in ms
-_D_TIME = 1 # Simulation time resolution
+_GUI_REFRESH_PERIOD = 10  # GUI refresh period in ms
+_D_TIME = 0.1 # Simulation time resolution
 _INTERSECTION_W_DIAMETER = 25  # Diameter of intersection widgets on GUI
 _VEHICLE_W_DIAMETER = 16  # Diameter of vehicle widgets on GUI
 _PADDING = 25  # Padding around canvas to prevent cropping
