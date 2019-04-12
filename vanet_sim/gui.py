@@ -10,6 +10,7 @@ from vanet_sim import vehicle_net, road_net, simulation
 
 
 _GUI_REFRESH_PERIOD = 150  # GUI refresh period in ms
+_D_TIME = 1 # Simulation time resolution
 _INTERSECTION_W_DIAMETER = 25  # Diameter of intersection widgets on GUI
 _VEHICLE_W_DIAMETER = 16  # Diameter of vehicle widgets on GUI
 _PADDING = 25  # Padding around canvas to prevent cropping
@@ -34,6 +35,7 @@ class MapFrame(tk.Frame):
                                                road_map=road_map,
                                                vehicle_net=vehicles)
         self.vehicle_widgets = {}
+        self.vehicle_radio_widgets = {}
 
         c_width, c_height = self._calc_canvas_bounds()
         self.canvas = tk.Canvas(self, width=c_width, height=c_height)
@@ -120,6 +122,7 @@ class MapFrame(tk.Frame):
 
             self.vehicle_widgets[v.id] = (o_id, t_id)
 
+
     def _redraw_vehicles(self):
         for v in self.vehicles:
             w_ids = self.vehicle_widgets[v.id]
@@ -136,6 +139,23 @@ class MapFrame(tk.Frame):
 
             self.canvas.move(w_ids[0], o_d_x + _PADDING, o_d_y + _PADDING)
             self.canvas.move(w_ids[1], o_d_x + _PADDING, o_d_y + _PADDING)
+
+            # Show communication distance around each current forwarder
+            if v.is_current_forwarder:
+                if v not in self.vehicle_radio_widgets:
+                    r = vehicle_net.COMMUNICATION_RADIUS
+                    t_id = self.canvas.create_oval(v.x + _INTERSECTION_W_DIAMETER - r + _PADDING,
+                                                   v.y + _INTERSECTION_W_DIAMETER - r + _PADDING,
+                                                   v.x + r + _PADDING,
+                                                   v.y + r + _PADDING)
+                    self.vehicle_radio_widgets[v] = t_id
+                else:
+                    t_id = self.vehicle_radio_widgets[v]
+                    self.canvas.move(t_id, o_d_x + _PADDING, o_d_y + _PADDING)
+            else:
+                if v in self.vehicle_radio_widgets:
+                    t_id = self.vehicle_radio_widgets[v]
+                    self.canvas.delete(t_id)
 
             fill_color = None
             text_color = None
@@ -178,7 +198,7 @@ if __name__ == '__main__':
 
     root = tk.Tk()
     root.title('PySim')
-    frame = MapFrame(root, d_time=1, time_dur=100,
+    frame = MapFrame(root, d_time=_D_TIME, time_dur=100,
                      road_map=road_map, vehicles=vehicles)
     frame.pack()
     frame.step_sim()
