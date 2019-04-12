@@ -34,14 +34,14 @@ class Vehicle:
         self.x = 0
         self.y = 0
         self.prev_time = 0
-        self.update_location(0)
+        self.neighbors = []
 
         self.congestion_detected = False
 
-        self.neighbors = []
-
         self.affected_at = None
         self.received_at = None
+
+        self.update_location(0)
 
     def update_location(self, time):
         """Updates position of vehicle with respect to current time.
@@ -54,12 +54,18 @@ class Vehicle:
         """
 
         d_pos = (time - self.prev_time) * self.spd
+        fwd_n = self._get_forward_neighbor()
 
-        # Vehicle may have moved to new road or stopped at incident
-        # by next sim time.
-        if (self.cur_road.is_obstructed
+        if fwd_n is not None and d_pos > _calc_distance(self, fwd_n) - 16:
+            d_pos = _calc_distance(self, fwd_n) - 16
+
+            if self.cur_road.is_obstructed:
+                self.spd = 0
+                self.affected_at = time
+
+        elif (self.cur_road.is_obstructed
                 and self.cur_pos + d_pos >= self.cur_road.obstruction_pos):
-            d_pos = 0
+            d_pos = self.cur_pos + d_pos - self.cur_road.obstruction_pos
             self.spd = 0.0
             self.affected_at = time
         elif self.cur_pos + d_pos >= self.cur_road.length:
@@ -94,6 +100,16 @@ class Vehicle:
         self.route_index = (self.route_index + 1) % len(self.route)
         self.cur_road = self.route[self.route_index]
         self.spd = self.cur_road.spd_lim
+
+    def _get_forward_neighbor(self):
+        """Gets the vehicle in front of itself.
+
+        :return: Vehicle in front of itself
+        """
+
+        for n in self.neighbors:
+            if n.cur_road == self.cur_road and n.cur_pos > self.cur_pos:
+                return n
 
     def update_neighbors(self, vehicle_net):
         """ Updates the list of neighbors that the vehicle sees.

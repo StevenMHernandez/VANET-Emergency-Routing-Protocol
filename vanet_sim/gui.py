@@ -178,7 +178,7 @@ if __name__ == '__main__':
 
     root = tk.Tk()
     root.title('PySim')
-    frame = MapFrame(root, d_time=1, time_dur=50,
+    frame = MapFrame(root, d_time=1, time_dur=100,
                      road_map=road_map, vehicles=vehicles)
     frame.pack()
     frame.step_sim()
