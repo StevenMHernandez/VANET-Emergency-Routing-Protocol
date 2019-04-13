@@ -28,7 +28,7 @@ class Epidemic:
         ret_lst = []
 
         for n in neighbors:
-            if n.received_at is None:
+            if n.received_at is None and not n.original_forwarder:
                 ret_lst.append(n)
 
         return ret_lst

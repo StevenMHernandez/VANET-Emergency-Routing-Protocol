@@ -167,7 +167,7 @@ class MapFrame(tk.Frame):
             elif v.received_before_affected:
                 fill_color = VEHICLE_COLOR_RECEIVED_BEFORE_AFFECTED
                 text_color = BLACK
-            elif v.affected_not_received:
+            elif v.affected_not_received or v.original_forwarder:
                 fill_color = VEHICLE_COLOR_AFFECTED
                 text_color = WHITE
             elif v.received_early:

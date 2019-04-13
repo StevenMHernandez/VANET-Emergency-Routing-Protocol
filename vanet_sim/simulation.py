@@ -44,8 +44,8 @@ class Simulation:
 
         # Route the message from the current forwarder
         for f_curr in current_forwarders:
-            protocol = UrbanRoutingProtocol
-            # protocol = Epidemic
+            # protocol = UrbanRoutingProtocol
+            protocol = Epidemic
             next_forwarders = protocol.choose_next_forwarders(f_curr.neighbors)
 
             for f_next in next_forwarders:
