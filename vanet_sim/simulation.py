@@ -1,9 +1,13 @@
 """Contains code to run the simulations."""
+import os
+import time
 
 __author__ = 'Adam Morrissett', 'Steven M. Hernandez'
 
 from vanet_sim.evaluation import Evaluations
 from vanet_sim.routing.routing_protocols import UrbanRoutingProtocol, Epidemic
+
+LOG_TO_FILE = True
 
 
 class Simulation:
@@ -20,6 +24,8 @@ class Simulation:
         self.d_time = d_time
         self.road_net = road_map
         self.vehicle_net = vehicle_net
+        self.experiment_storage = "../storage/experiments/{}/".format(time.time())
+        os.makedirs(self.experiment_storage)
 
     def step(self):
         """Progresses the simulation forward by one time derivative."""
@@ -54,6 +60,9 @@ class Simulation:
                 self.vehicle_net[f_next.id - 1].is_current_forwarder = True
 
         print(Evaluations.run(self.cur_time, self.vehicle_net))
+
+        if LOG_TO_FILE:
+            Evaluations.write_to(self.experiment_storage, self.cur_time, self.vehicle_net)
 
         self.cur_time += self.d_time
 

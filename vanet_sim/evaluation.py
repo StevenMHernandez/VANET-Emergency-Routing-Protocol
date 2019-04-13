@@ -63,3 +63,18 @@ class Evaluations:
                         Evaluations.get_num_affected_and_received(vehicle_net),
                         Evaluations.get_average_time_to_react(vehicle_net),
                         )
+
+    @staticmethod
+    def write_to(directory, t, vehicle_net):
+        if t == 0:
+            f = open(directory + "evaluation.csv", "w")
+            f.write("time,num_affected,num_received,num_affected_and_received,avg_time_to_react\n")
+            f.close()
+        f = open(directory + "evaluation.csv", "a")
+        f.write(",".join(str(x) for x in [
+            t,
+            Evaluations.get_num_affected(vehicle_net),
+            Evaluations.get_num_received(vehicle_net),
+            Evaluations.get_num_affected_and_received(vehicle_net),
+            Evaluations.get_average_time_to_react(vehicle_net),
+        ]) + "\n")
