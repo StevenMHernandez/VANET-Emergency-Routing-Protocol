@@ -8,6 +8,8 @@ from vanet_sim.evaluation import Evaluations
 from vanet_sim.routing.routing_protocols import UrbanRoutingProtocol, Epidemic
 
 LOG_TO_FILE = True
+URBAN_ROUTING_STRING = "urban"
+EPIDEMIC_ROUTING_STRING = "epidemic"
 
 
 class Simulation:
@@ -24,8 +26,15 @@ class Simulation:
         self.d_time = d_time
         self.road_net = road_map
         self.vehicle_net = vehicle_net
+
         self.experiment_storage = "../storage/experiments/{}/".format(time.time())
         os.makedirs(self.experiment_storage)
+
+        self.settings = {
+            "protocol": EPIDEMIC_ROUTING_STRING  # URBAN_ROUTING_STRING
+        }
+
+        self.write_settings_to_file()
 
     def step(self):
         """Progresses the simulation forward by one time derivative."""
@@ -50,8 +59,11 @@ class Simulation:
 
         # Route the message from the current forwarder
         for f_curr in current_forwarders:
-            # protocol = UrbanRoutingProtocol
-            protocol = Epidemic
+            protocols = {
+                URBAN_ROUTING_STRING: UrbanRoutingProtocol,
+                EPIDEMIC_ROUTING_STRING: Epidemic,
+            }
+            protocol = protocols[self.settings["protocol"]]
             next_forwarders = protocol.choose_next_forwarders(f_curr.neighbors)
 
             for f_next in next_forwarders:
@@ -76,3 +88,9 @@ class Simulation:
 
         while self.cur_time < time_duration:
             self.step()
+
+    def write_settings_to_file(self):
+        if LOG_TO_FILE:
+            f = open(self.experiment_storage + "settings.txt", 'w')
+            f.write("\n".join(map(lambda x: '"{}": {}'.format(x, self.settings[x]), self.settings)))
+            f.close()
