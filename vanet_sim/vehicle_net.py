@@ -7,8 +7,6 @@ import math
 
 from vanet_sim import road_net
 
-COMMUNICATION_RADIUS = 125
-
 
 class Vehicle:
     def __init__(self, node_id, route):
@@ -66,7 +64,7 @@ class Vehicle:
                 self.affected_at = time
 
         elif (self.cur_road.is_obstructed
-                and self.cur_pos + d_pos >= self.cur_road.obstruction_pos):
+              and self.cur_pos + d_pos >= self.cur_road.obstruction_pos):
             d_pos = 0
             self.spd = 0.0
             self.affected_at = time
@@ -113,9 +111,10 @@ class Vehicle:
             if n.cur_road == self.cur_road and n.cur_pos > self.cur_pos:
                 return n
 
-    def update_neighbors(self, vehicle_net):
+    def update_neighbors(self, vehicle_net, communication_radius):
         """ Updates the list of neighbors that the vehicle sees.
 
+        :param communication_radius:
         :param vehicle_net: the vehicle network
         :return: None
         """
@@ -124,7 +123,7 @@ class Vehicle:
 
         for v in vehicle_net:
             if (v.id != self.id
-                    and _calc_distance(self, v) < COMMUNICATION_RADIUS):
+                    and _calc_distance(self, v) < communication_radius):
                 self.neighbors.append(v)
 
     def update_routing(self, time):

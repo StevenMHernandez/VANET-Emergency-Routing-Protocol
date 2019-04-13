@@ -142,7 +142,7 @@ class MapFrame(tk.Frame):
             # Show communication distance around each current forwarder
             if v.is_current_forwarder:
                 if v not in self.vehicle_radio_widgets:
-                    r = vehicle_net.COMMUNICATION_RADIUS
+                    r = self.simulator.settings["communication_radius"]
                     t_id = self.canvas.create_oval(
                         v.x + _INTERSECTION_W_DIAMETER - r + _PADDING,
                         v.y + _INTERSECTION_W_DIAMETER - r + _PADDING,

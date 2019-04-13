@@ -31,7 +31,8 @@ class Simulation:
         os.makedirs(self.experiment_storage)
 
         self.settings = {
-            "protocol": EPIDEMIC_ROUTING_STRING  # URBAN_ROUTING_STRING
+            "protocol": EPIDEMIC_ROUTING_STRING,  # URBAN_ROUTING_STRING,  #
+            "communication_radius": 50,
         }
 
         self.write_settings_to_file()
@@ -45,7 +46,7 @@ class Simulation:
 
         # Collect list of neighbors
         for vehicle in self.vehicle_net:
-            vehicle.update_neighbors(self.vehicle_net)
+            vehicle.update_neighbors(self.vehicle_net, self.settings["communication_radius"])
 
         # Update the routing state
         for v in self.vehicle_net:
