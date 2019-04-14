@@ -1,11 +1,34 @@
 class BaseRoutingProtocol:
+    """Abstract base class for routing protocols."""
+
     def route_message(self, f_curr, settings, vehicle_net, cur_time):
-        if self.should_continue_routing(settings, f_curr.neighbors, 0) and self.should_remain_current_forwarder(f_curr, cur_time, settings, f_curr.neighbors, 0):
-            next_forwarders = self.choose_next_forwarders(settings, f_curr.neighbors, 0)
+        """Gives message to all next forwarders.
+
+        :param f_curr: current forwarder
+        :param settings: protocol settings
+        :param vehicle_net: vehicle network
+        :param cur_time: current simulation time
+        :return:
+        """
+
+        if (self.should_continue_routing(settings, f_curr.neighbors, 0)
+            and self.should_remain_current_forwarder(f_curr, cur_time,
+                                                     settings,
+                                                     f_curr.neighbors, 0)):
+
+            next_forwarders = self.choose_next_forwarders(settings,
+                                                          f_curr.neighbors,
+                                                          hop_num=0)
 
             for f_next in next_forwarders:
-                if not self.should_remain_current_forwarder(f_curr, cur_time, settings, f_curr.neighbors, 0):
+                if not self.should_remain_current_forwarder(f_curr,
+                                                            cur_time,
+                                                            settings,
+                                                            f_curr.neighbors,
+                                                            hop_num=0):
+
                     vehicle_net[f_curr.id - 1].is_current_forwarder = False
+
                 vehicle_net[f_next.id - 1].received_at = cur_time
                 vehicle_net[f_next.id - 1].is_current_forwarder = True
         else:
@@ -13,15 +36,26 @@ class BaseRoutingProtocol:
 
     @staticmethod
     def choose_next_forwarders(settings, neighbors, hop_num):
-        return []
+        """Chooses the next forwarders.
+
+        Next forwarders are based on the protocols settings, neighbors,
+        and current hop number of message.
+
+        :param settings: protocol settings
+        :param neighbors: neighbors of current forwarder
+        :param hop_num: current hop number of message
+        :return: List of next forwarders
+        """
+        return NotImplemented
 
     @staticmethod
     def should_continue_routing(settings, neighbors, hop_num):
-        return True
+        return NotImplemented
 
     @staticmethod
-    def should_remain_current_forwarder(f_curr, cur_time, settings, neighbors, hop_num):
-        return False
+    def should_remain_current_forwarder(f_curr, cur_time, settings, neighbors,
+                                        hop_num):
+        return NotImplemented
 
 
 class UrbanRoutingProtocol(BaseRoutingProtocol):
@@ -53,7 +87,8 @@ class UrbanRoutingProtocol(BaseRoutingProtocol):
         return hop_num < settings["max_hops"]
 
     @staticmethod
-    def should_remain_current_forwarder(f_curr, cur_time, settings, neighbors, hop_num):
+    def should_remain_current_forwarder(f_curr, cur_time, settings, neighbors,
+                                        hop_num):
         return f_curr.received_at + settings["forwarder_ttl"] > cur_time
 
 
@@ -69,5 +104,10 @@ class Epidemic(BaseRoutingProtocol):
         return ret_lst
 
     @staticmethod
-    def should_remain_current_forwarder(f_curr, cur_time, settings, neighbors, hop_num):
+    def should_continue_routing(settings, neighbors, hop_num):
+        return True
+
+    @staticmethod
+    def should_remain_current_forwarder(f_curr, cur_time, settings, neighbors,
+                                        hop_num):
         return True
