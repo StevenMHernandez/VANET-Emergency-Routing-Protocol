@@ -27,7 +27,7 @@ class Evaluations:
         n = 0
 
         for v in vehicle_net:
-            if v.affected_at is not None and v.received_at is not None:
+            if v.affected_at is not None and v.received_at is not None and not v.original_forwarder:
                 n += 1
 
         return n
