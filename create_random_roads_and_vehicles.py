@@ -6,12 +6,13 @@ import random
 
 __author__ = 'Adam Morrissett', 'Steven M. Hernandez'
 
-NUM_INTERSECTIONS_X = 9
-NUM_INTERSECTIONS_Y = 14
+NUM_INTERSECTIONS_X = 8
+NUM_INTERSECTIONS_Y = 8
 NUM_VEHICLES = 100
 NUM_INTERSECTIONS_PER_VEHICLE = 20
 OBSTRUCTION_START = (5, 2)
 OBSTRUCTION_END = (6, 2)
+RANDOM_MOVEMENT = False # if False, roads act as one-way roads
 
 open('intersections.generated.csv', 'w').close()
 open('roads.generated.csv', 'w').close()
@@ -81,22 +82,70 @@ for v_i in range(1, NUM_VEHICLES + 1):
     for i in range(0, NUM_INTERSECTIONS_PER_VEHICLE):
         intersections_last = intersections[-1]
 
-        if intersections_last[0] == 0:
-            x_change = random_binary()
-        elif intersections_last[0] == NUM_INTERSECTIONS_X - 1:
-            x_change = -random_binary()
-        else:
-            x_change = random_ternary()
-
-        if x_change == 0:
-            if intersections_last[1] == 0:
-                y_change = 1
-            elif intersections_last[1] == NUM_INTERSECTIONS_Y - 1:
-                y_change = -1
+        if RANDOM_MOVEMENT:
+            if intersections_last[0] == 0:
+                x_change = random_binary()
+            elif intersections_last[0] == NUM_INTERSECTIONS_X - 1:
+                x_change = -random_binary()
             else:
-                y_change = random_binary() * 2 - 1
+                x_change = random_ternary()
+
+            if x_change == 0:
+                if intersections_last[1] == 0:
+                    y_change = 1
+                elif intersections_last[1] == NUM_INTERSECTIONS_Y - 1:
+                    y_change = -1
+                else:
+                    y_change = random_binary() * 2 - 1
+            else:
+                y_change = 0
         else:
-            y_change = 0
+            # Urban Roadways (one-way streets)
+
+            #    x: 0 1 2 3 4 5 6 7 8 9
+            # y: 0 ->->->->->->->->->->
+            #    1 <-<-<-<-<-<-<-<-<-<-
+            #    2 ->->->->->->->->->->
+            #    3 <-<-<-<-<-<-<-<-<-<-
+            #    4 ->->->->->->->->->->
+            #    5 <-<-<-<-<-<-<-<-<-<-
+            #    6 ->->->->->->->->->->
+            #    7 <-<-<-<-<-<-<-<-<-<-
+            #    8 ->->->->->->->->->->
+            #    9 <-<-<-<-<-<-<-<-<-<-
+
+            #    x: 0 1 2 3 4 5 6 7 8 9
+            # y: 0  ^ | ^ | ^ | ^ | ^ |
+            #    1  | ↓ | ↓ | ↓ | ↓ | ↓
+            #    2  ^ | ^ | ^ | ^ | ^ |
+            #    3  | ↓ | ↓ | ↓ | ↓ | ↓
+            #    4  ^ | ^ | ^ | ^ | ^ |
+            #    5  | ↓ | ↓ | ↓ | ↓ | ↓
+            #    6  ^ | ^ | ^ | ^ | ^ |
+            #    7  | ↓ | ↓ | ↓ | ↓ | ↓
+            #    8  ^ | ^ | ^ | ^ | ^ |
+            #    9  | ↓ | ↓ | ↓ | ↓ | ↓
+
+            def is_even(n):
+                return n % 2 == 0
+
+
+            if not is_even(NUM_INTERSECTIONS_X) or not is_even(NUM_INTERSECTIONS_Y):
+                raise Exception("# of Intersections cannot be odd or vehicles will become stuck.")
+
+            x = intersections_last[0]
+            y = intersections_last[1]
+
+            only_x_movement = (y == 0 and is_even(x)) or (y >= NUM_INTERSECTIONS_Y - 1 and not is_even(x))
+            only_y_movement = (x == 0 and not is_even(y)) or (x >= NUM_INTERSECTIONS_X - 1 and is_even(y))
+
+            movement = random_binary()
+            if (movement == 0 or only_x_movement) and not only_y_movement:
+                x_change = 1 if is_even(y) else -1
+                y_change = 0
+            else:
+                x_change = 0
+                y_change = -1 if is_even(x) else 1
 
         intersections_next = (intersections_last[0] + x_change, intersections_last[1] + y_change)
 
