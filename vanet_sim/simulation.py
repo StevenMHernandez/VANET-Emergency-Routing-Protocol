@@ -31,8 +31,13 @@ class Simulation:
         os.makedirs(self.experiment_storage)
 
         self.settings = {
-            "protocol": EPIDEMIC_ROUTING_STRING,  # URBAN_ROUTING_STRING,  #
-            "communication_radius": 50,
+            "communication_radius": 75,
+            "protocol": {
+                "type": URBAN_ROUTING_STRING,
+                # "type": EPIDEMIC_ROUTING_STRING,
+                "max_hops": 5,
+                "forwarder_ttl": 5,
+            }
         }
 
         self.write_settings_to_file()
@@ -64,13 +69,8 @@ class Simulation:
                 URBAN_ROUTING_STRING: UrbanRoutingProtocol,
                 EPIDEMIC_ROUTING_STRING: Epidemic,
             }
-            protocol = protocols[self.settings["protocol"]]
-            next_forwarders = protocol.choose_next_forwarders(f_curr.neighbors)
-
-            for f_next in next_forwarders:
-                self.vehicle_net[f_curr.id - 1].is_current_forwarder = False
-                self.vehicle_net[f_next.id - 1].received_at = self.cur_time
-                self.vehicle_net[f_next.id - 1].is_current_forwarder = True
+            protocol = protocols[self.settings["protocol"]["type"]]
+            protocol.route_message(protocol, f_curr, self.settings["protocol"], self.vehicle_net, self.cur_time)
 
         print(Evaluations.run(self.cur_time, self.vehicle_net))
 
