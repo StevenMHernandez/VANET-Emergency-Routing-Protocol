@@ -20,8 +20,8 @@ class Vehicle:
         self.route = route
 
         self.route_index = 0
-        self.cur_road = self.route[self.route_index]
-        self.spd = self.cur_road.spd_lim
+        self._cur_road = None
+        self.spd = None
         self.cur_pos = 0
         self.at_intersection = False
         self.is_current_forwarder = False
@@ -35,13 +35,19 @@ class Vehicle:
 
         self.affected_at = None
         self.received_at = None
+        self.passed_previous_intersection_at = None
 
         self._received_before_affected = False  # Received msg before affected
         self._affected_not_received = False  # Affected without receiving msg
         self._received_early = False  # Received msg & not affected
         self._original_forwarder = False  # If msg originated from itself
 
+        self.set_cur_road(self.route[self.route_index], 0)
+
         self.update_location(0)
+
+        # Packet related information
+        self.dest_intersection = None
 
     def update_location(self, time):
         """Updates position of vehicle with respect to current time.
@@ -70,7 +76,7 @@ class Vehicle:
             self.affected_at = time
         elif self.cur_pos + d_pos >= self.cur_road.length:
             d_pos -= self.cur_road.length
-            self._next_road()
+            self._next_road(time)
 
         self.cur_pos += d_pos
 
@@ -88,7 +94,7 @@ class Vehicle:
 
         self.prev_time = time
 
-    def _next_road(self):
+    def _next_road(self, time):
         """Moves vehicle to next road in route.
 
         Vehicle is restarted at the beginning of the route if it is
@@ -98,7 +104,7 @@ class Vehicle:
         """
 
         self.route_index = (self.route_index + 1) % len(self.route)
-        self.cur_road = self.route[self.route_index]
+        self.set_cur_road(self.route[self.route_index], time)
         self.spd = self.cur_road.spd_lim
 
     def _get_forward_neighbor(self):
@@ -169,6 +175,15 @@ class Vehicle:
     @original_forwarder.setter
     def original_forwarder(self, val):
         self._original_forwarder = val
+
+    @property
+    def cur_road(self):
+        return self._cur_road
+
+    def set_cur_road(self, r, t):
+        self.passed_previous_intersection_at = t
+        self._cur_road = r
+        self.spd = self._cur_road.spd_lim
 
 
 def build_vehicle_net(filepath, road_map):

@@ -31,7 +31,7 @@ class Simulation:
         os.makedirs(self.experiment_storage)
 
         self.settings = {
-            "communication_radius": 75,
+            "communication_radius": 45,
             "protocol": {
                 "type": URBAN_ROUTING_STRING,
                 # "type": EPIDEMIC_ROUTING_STRING,
