@@ -86,7 +86,7 @@ class UrbanRoutingProtocol(BaseRoutingProtocol):
         for n in neighbors:
             has_not_received_packet = n.received_at is None
             is_on_road_segment = (n.cur_road.start_node == intersection
-                        and n.cur_road.end_node == f_curr.cur_road.end_node)
+                                  and n.cur_road.end_node == f_curr.cur_road.end_node)
             current_forwarder_has_been_affected = f_curr.affected_at is not None
             testing = f_next_passed_previous_intersection_at >= n.passed_previous_intersection_at
 
@@ -130,9 +130,11 @@ class UrbanRoutingProtocol(BaseRoutingProtocol):
             #
             # 2. Determine which vehicle is furthest on this road (closest to next intersection)
             #
-            f_next = UrbanRoutingProtocol.find_node_closest_to(intersection=f_curr.dest_intersection,
-                                                               neighbors=neighbors,
-                                                               f_curr=f_curr)
+            f_next = None
+            if R_nxt is not None:
+                f_next = UrbanRoutingProtocol.find_node_closest_to(intersection=R_nxt.end_node,
+                                                                   neighbors=neighbors,
+                                                                   f_curr=f_curr)
 
             if f_next is not None:
                 ret_lst.append(f_next)
