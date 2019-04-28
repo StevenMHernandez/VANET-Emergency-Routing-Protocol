@@ -6,6 +6,7 @@ import csv
 import math
 
 from vanet_sim import road_net
+from vanet_sim.routing.routing_protocols import Message
 
 
 class Vehicle:
@@ -24,7 +25,7 @@ class Vehicle:
         self.spd = None
         self.cur_pos = 0
         self.at_intersection = False
-        self.is_current_forwarder = False
+        self.is_cur_fwdr = False
 
         self.x = 0
         self.y = 0
@@ -49,6 +50,8 @@ class Vehicle:
         # Packet related information
         self.dest_intersection = None
 
+        self.msg = None
+
     def update_location(self, time):
         """Updates position of vehicle with respect to current time.
 
@@ -62,7 +65,8 @@ class Vehicle:
         d_pos = (time - self.prev_time) * self.spd
         fwd_n = self._get_forward_neighbor()
 
-        if fwd_n is not None and d_pos > _calc_distance(self, fwd_n) - 16:
+        if (fwd_n is not None and d_pos > _calc_distance(self, fwd_n) - 16
+                and time > 5):
             d_pos = _calc_distance(self, fwd_n) - 16
 
             if self.cur_road.is_obstructed:
@@ -70,7 +74,7 @@ class Vehicle:
                 self.affected_at = time
 
         elif (self.cur_road.is_obstructed
-              and self.cur_pos + d_pos >= self.cur_road.obstruction_pos):
+                and self.cur_pos + d_pos >= self.cur_road.obstruction_pos):
             d_pos = 0
             self.spd = 0.0
             self.affected_at = time
@@ -138,7 +142,9 @@ class Vehicle:
         # different logic here. Should only one current forwarder be
         # allowed for example.
         if self.affected_at == time and self.received_at is None:
-            self.is_current_forwarder = True
+            self.is_cur_fwdr = True
+            self.msg = Message(src_isect=self.cur_road.start_node,
+                               dst_isect=self.cur_road.start_node)
             self.received_at = time
 
     @property

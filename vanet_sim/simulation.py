@@ -5,10 +5,11 @@ import time
 __author__ = 'Adam Morrissett', 'Steven M. Hernandez'
 
 from vanet_sim.evaluation import Evaluations
-from vanet_sim.routing.routing_protocols import UrbanRoutingProtocol, Epidemic
+from vanet_sim.routing.routing_protocols import UrbanRoutingHops, UrbanRoutingIntersection, Epidemic
 
 LOG_TO_FILE = True
-URBAN_ROUTING_STRING = "urban"
+URBAN_ROUTING_INT_STRING = "urban-int"
+URBAN_ROUTING_HOPS_STRING = "urban-hops"
 EPIDEMIC_ROUTING_STRING = "epidemic"
 
 
@@ -33,9 +34,11 @@ class Simulation:
         self.settings = {
             "communication_radius": 45,
             "protocol": {
-                "type": URBAN_ROUTING_STRING,
+                "type": URBAN_ROUTING_INT_STRING,
+                # "type": URBAN_ROUTING_HOPS_STRING,
                 # "type": EPIDEMIC_ROUTING_STRING,
                 "max_hops": 5,
+                "max_ints": 2,
                 "forwarder_ttl": 5,
             }
         }
@@ -46,36 +49,44 @@ class Simulation:
         """Progresses the simulation forward by one time derivative."""
 
         # Update vehicle locations first
-        for vehicle in self.vehicle_net:
-            vehicle.update_location(self.cur_time)
+        for v in self.vehicle_net:
+            v.update_location(self.cur_time)
 
         # Collect list of neighbors
-        for vehicle in self.vehicle_net:
-            vehicle.update_neighbors(self.vehicle_net, self.settings["communication_radius"])
+        for v in self.vehicle_net:
+            v.update_neighbors(self.vehicle_net,
+                               self.settings["communication_radius"])
 
         # Update the routing state
         for v in self.vehicle_net:
             v.update_routing(self.cur_time)
 
         # Find the current forwarders
-        current_forwarders = []
-        for vehicle in self.vehicle_net:
-            if vehicle.is_current_forwarder:
-                current_forwarders.append(vehicle)
+        cur_fwdrs = [v for v in self.vehicle_net if v.is_cur_fwdr]
+        # for v in self.vehicle_net:
+        #     if v.is_cur_fwdr:
+        #         current_forwarders.append(v)
 
         # Route the message from the current forwarder
-        for f_curr in current_forwarders:
+        for cur_fwdr in cur_fwdrs:
             protocols = {
-                URBAN_ROUTING_STRING: UrbanRoutingProtocol,
+                URBAN_ROUTING_HOPS_STRING: UrbanRoutingHops,
+                URBAN_ROUTING_INT_STRING: UrbanRoutingIntersection,
                 EPIDEMIC_ROUTING_STRING: Epidemic,
             }
             protocol = protocols[self.settings["protocol"]["type"]]
-            protocol.route_message(protocol, f_curr, self.settings["protocol"], self.vehicle_net, self.cur_time)
+            protocol.route_message(protocol,
+                                   cur_fwdr,
+                                   self.settings["protocol"],
+                                   self.vehicle_net,
+                                   self.cur_time)
 
         print(Evaluations.run(self.cur_time, self.vehicle_net))
 
         if LOG_TO_FILE:
-            Evaluations.write_to(self.experiment_storage, self.cur_time, self.vehicle_net)
+            Evaluations.write_to(self.experiment_storage,
+                                 self.cur_time,
+                                 self.vehicle_net)
 
         self.cur_time += self.d_time
 

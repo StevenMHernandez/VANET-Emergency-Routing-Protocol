@@ -140,7 +140,7 @@ class MapFrame(tk.Frame):
             self.canvas.move(w_ids[1], o_d_x + _PADDING, o_d_y + _PADDING)
 
             # Show communication distance around each current forwarder
-            if v.is_current_forwarder:
+            if v.is_cur_fwdr:
                 if v not in self.vehicle_radio_widgets:
                     r = self.simulator.settings["communication_radius"]
                     t_id = self.canvas.create_oval(
@@ -161,7 +161,7 @@ class MapFrame(tk.Frame):
             fill_color = None
             text_color = None
 
-            if v.is_current_forwarder:
+            if v.is_cur_fwdr:
                 fill_color = VEHICLE_COLOR_CURRENT_FORWARDER
                 text_color = BLACK
             elif v.received_before_affected:
