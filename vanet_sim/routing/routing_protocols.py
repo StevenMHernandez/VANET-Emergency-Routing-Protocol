@@ -25,7 +25,7 @@ class BaseRoutingProtocol:
         :return:
         """
 
-        if (self.should_continue_routing(settings, cur_fwdr.neighbors, 0)
+        if (self.should_continue_routing(settings, cur_fwdr, 0)
                 and self.should_remain_current_forwarder(cur_fwdr,
                                                          cur_time,
                                                          settings,
@@ -43,6 +43,8 @@ class BaseRoutingProtocol:
 
                 vehicle_net[nxt_fwdr.id - 1].received_at = cur_time
                 vehicle_net[nxt_fwdr.id - 1].is_cur_fwdr = True
+                cur_fwdr.msg.hop_cnt += 1
+                vehicle_net[nxt_fwdr.id - 1].msg = cur_fwdr.msg
                 self.share_additional_data(cur_fwdr, nxt_fwdr)
         else:
             vehicle_net[cur_fwdr.id - 1].is_cur_fwdr = False
@@ -63,7 +65,7 @@ class BaseRoutingProtocol:
         return NotImplemented
 
     @staticmethod
-    def should_continue_routing(settings, neighbors, hop_num):
+    def should_continue_routing(settings, cur_fwdr, hop_num):
         return NotImplemented
 
     @staticmethod
@@ -82,40 +84,6 @@ class BaseRoutingProtocol:
 
 class UrbanRoutingProtocol(BaseRoutingProtocol):
     """ABC for Urban Routing Protocol."""
-
-    @staticmethod
-    def find_node_closest_to(intersection, neighbors, f_curr):
-        """
-        Find a node closest to a given intersection which
-        1. has not received a warning-packet in the past
-        2. is currently on the road segment
-        3. Either:
-            a. the current forwarder has been affected (thus not moving)
-            b. appeared on the road segment before the current forwarder
-
-        :param intersection:
-        :param neighbors:
-        :param f_curr:
-        :return:
-        """
-        f_next = None
-        f_next_passed_previous_intersection_at = f_curr.passed_previous_intersection_at
-
-        for n in neighbors:
-            has_not_received_packet = n.received_at is None
-            is_on_road_segment = (n.cur_road.start_node == intersection
-                                  and n.cur_road.end_node == f_curr.cur_road.end_node)
-            current_forwarder_has_been_affected = f_curr.affected_at is not None
-            testing = f_next_passed_previous_intersection_at >= n.passed_previous_intersection_at
-
-            if (has_not_received_packet
-                    and is_on_road_segment
-                    and (current_forwarder_has_been_affected or testing)):
-
-                f_next = n
-                f_next_passed_previous_intersection_at = n.passed_previous_intersection_at
-
-        return f_next
 
     @staticmethod
     def choose_next_forwarders(settings, f_curr, neighbors, hop_num):
@@ -137,6 +105,7 @@ class UrbanRoutingProtocol(BaseRoutingProtocol):
             # 1. Determine which road to send down next
             FR = {}
             R_nxt = None
+
             for n in neighbors:
                 if n.cur_road not in FR:
                     FR[n.cur_road] = 0
@@ -150,9 +119,9 @@ class UrbanRoutingProtocol(BaseRoutingProtocol):
             # (closest to next intersection)
             f_next = None
             if R_nxt is not None:
-                f_next = UrbanRoutingProtocol.find_node_closest_to(intersection=R_nxt.end_node,
-                                                                   neighbors=neighbors,
-                                                                   f_curr=f_curr)
+                f_next = _find_node_closest_to(intersection=R_nxt.end_node,
+                                               neighbors=neighbors,
+                                               f_curr=f_curr)
 
             if f_next is not None:
                 ret_lst.append(f_next)
@@ -161,10 +130,12 @@ class UrbanRoutingProtocol(BaseRoutingProtocol):
                 # Determine destination (intersection) of packet
                 f_curr.dest_intersection = f_curr.cur_road.start_node
 
+            dst_isect = f_curr.msg.dst_isect
+
             # 1. Find node which is closest to the intersection
-            f_next = UrbanRoutingProtocol.find_node_closest_to(intersection=f_curr.dest_intersection,
-                                                               neighbors=neighbors,
-                                                               f_curr=f_curr)
+            f_next = _find_node_closest_to(intersection=dst_isect,
+                                           neighbors=neighbors,
+                                           f_curr=f_curr)
 
             # 2. Alternatively, find node which is headed towards the
             # intersection (but on a different road)
@@ -180,7 +151,7 @@ class UrbanRoutingProtocol(BaseRoutingProtocol):
         return ret_lst
 
     @staticmethod
-    def should_continue_routing(settings, neighbors, hop_num):
+    def should_continue_routing(settings, cur_fwdr, hop_num):
         return NotImplemented
 
     @staticmethod
@@ -204,16 +175,35 @@ class UrbanRoutingHops(UrbanRoutingProtocol):
     """Urban Routing Protocol that terminates based on hop count."""
 
     @staticmethod
-    def should_continue_routing(settings, neighbors, hop_num):
-        return hop_num < settings["max_hops"]
+    def should_continue_routing(settings, cur_fwdr, hop_num):
+        """Continues routing until max hop count is reached.
+
+        :param settings: settings for routing protocol
+        :param cur_fwdr: current forwarder
+        :param hop_num: current hop count of message
+        :return: if the current forwarder should continue routing
+        """
+
+        return cur_fwdr.msg.hop_cnt < settings["max_hops"]
 
 
 class UrbanRoutingIntersection(UrbanRoutingProtocol):
     """Urban Routing Protocol that terminates based on intersection count."""
 
     @staticmethod
-    def should_continue_routing(settings, neighbors, hop_num):
-        return hop_num < settings["max_ints"]
+    def should_continue_routing(settings, cur_fwdr, hop_num):
+        """Continues routing until max hop count is reached.
+
+        :param settings: settings for routing protocol
+        :param cur_fwdr: current forwarder
+        :param hop_num: current hop count of message
+        :return: if the current forwarder should continue routing
+        """
+
+        dist = _calc_dist(cur_fwdr.msg.src_isect,
+                          cur_fwdr.msg.dst_isect)
+
+        return dist < settings["max_ints"]
 
 
 class Epidemic(BaseRoutingProtocol):
@@ -248,6 +238,9 @@ class Epidemic(BaseRoutingProtocol):
 def _calc_dist(isect0, isect1):
     """Calculates distance between two intersections.
 
+    Distance is number of intersections required to get from
+    one to the other.
+
     :param isect0: first intersection
     :param isect1: second intersection
     :return:
@@ -260,3 +253,37 @@ def _calc_dist(isect0, isect1):
     isect1_pos_y = int(isect1.name[2:3])
 
     return abs(isect0_pos_x - isect1_pos_x) + (isect0_pos_y - isect1_pos_y)
+
+
+def _find_node_closest_to(intersection, neighbors, f_curr):
+    """
+    Find a node closest to a given intersection which
+    1. has not received a warning-packet in the past
+    2. is currently on the road segment
+    3. Either:
+        a. the current forwarder has been affected (thus not moving)
+        b. appeared on the road segment before the current forwarder
+
+    :param intersection:
+    :param neighbors:
+    :param f_curr:
+    :return:
+    """
+    f_next = None
+    f_next_passed_previous_intersection_at = f_curr.passed_previous_intersection_at
+
+    for n in neighbors:
+        has_not_received_packet = n.received_at is None
+        is_on_road_segment = (n.cur_road.start_node == intersection
+                              and n.cur_road.end_node == f_curr.cur_road.end_node)
+        current_forwarder_has_been_affected = f_curr.affected_at is not None
+        testing = f_next_passed_previous_intersection_at >= n.passed_previous_intersection_at
+
+        if (has_not_received_packet
+                and is_on_road_segment
+                and (current_forwarder_has_been_affected or testing)):
+
+            f_next = n
+            f_next_passed_previous_intersection_at = n.passed_previous_intersection_at
+
+    return f_next
