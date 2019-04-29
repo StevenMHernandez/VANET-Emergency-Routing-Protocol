@@ -1,13 +1,14 @@
 class Message:
     """POD class representing the incident message."""
 
-    def __init__(self, src_isect, dst_isect):
+    def __init__(self, src_rd, dst_isect):
         """Custom constructor for Message object.
 
-        :param src_isect: start intersection of incident road
+        :param src_rd: the incident road
         :param dst_isect: start intersection of current road
         """
-        self.src_isect = src_isect
+
+        self.src_rd = src_rd
         self.dst_isect = dst_isect
         self.hop_cnt = 0
 
@@ -103,32 +104,33 @@ class UrbanRoutingProtocol(BaseRoutingProtocol):
         if f_curr.at_intersection:
 
             # 1. Determine which road to send down next
-            FR = {}
-            R_nxt = None
+            feed_ratios = {}
+            nxt_rd = None
 
             for n in neighbors:
-                if n.cur_road not in FR:
-                    FR[n.cur_road] = 0
-                FR[n.cur_road] += 1
+                if n.cur_road not in feed_ratios:
+                    feed_ratios[n.cur_road] = 0
+                feed_ratios[n.cur_road] += 1
 
-                # Determine R_nxt
-                if R_nxt is not None and FR[n.cur_road] > FR[R_nxt]:
-                    R_nxt = n.cur_road
+                # Determine nxt_rd
+                if (nxt_rd is None
+                        or feed_ratios[n.cur_road] > feed_ratios[nxt_rd]):
+                    nxt_rd = n.cur_road
 
             # 2. Determine which vehicle is furthest on this road
             # (closest to next intersection)
             f_next = None
-            if R_nxt is not None:
-                f_next = _find_node_closest_to(intersection=R_nxt.end_node,
+            if nxt_rd is not None:
+                f_next = _find_node_closest_to(intersection=nxt_rd.end_node,
                                                neighbors=neighbors,
                                                f_curr=f_curr)
 
             if f_next is not None:
                 ret_lst.append(f_next)
         else:
-            if f_curr.original_forwarder:
-                # Determine destination (intersection) of packet
-                f_curr.dest_intersection = f_curr.cur_road.start_node
+            # if f_curr.original_forwarder:
+            #     # Determine destination (intersection) of packet
+            #     f_curr.dest_intersection = f_curr.cur_road.start_node
 
             dst_isect = f_curr.msg.dst_isect
 
@@ -142,7 +144,7 @@ class UrbanRoutingProtocol(BaseRoutingProtocol):
             if f_next is None:
                 for n in neighbors:
                     if n.received_at is None:
-                        if n.cur_road.end_node == f_curr.dest_intersection:
+                        if n.cur_road.end_node == dst_isect:
                             f_next = n
 
             if f_next is not None:
