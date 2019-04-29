@@ -5,12 +5,13 @@ import time
 __author__ = 'Adam Morrissett', 'Steven M. Hernandez'
 
 from vanet_sim.evaluation import Evaluations
-from vanet_sim.routing.routing_protocols import UrbanRoutingHops, UrbanRoutingIntersection, Epidemic
+from vanet_sim.routing.routing_protocols import UrbanRoutingHops, UrbanRoutingIntersection, Epidemic, GyTar
 
 LOG_TO_FILE = True
 URBAN_ROUTING_INT_STRING = "urban-int"
 URBAN_ROUTING_HOPS_STRING = "urban-hops"
 EPIDEMIC_ROUTING_STRING = "epidemic"
+GYTAR_ROUTING_STRING = "gytar"
 
 
 class Simulation:
@@ -35,10 +36,11 @@ class Simulation:
             "communication_radius": 45,
             "protocol": {
                 # "type": URBAN_ROUTING_INT_STRING,
-                "type": URBAN_ROUTING_HOPS_STRING,
+                # "type": URBAN_ROUTING_HOPS_STRING,
                 # "type": EPIDEMIC_ROUTING_STRING,
+                "type": GYTAR_ROUTING_STRING,
                 "max_hops": 5,
-                "max_ints": 2,
+                "max_ints": 1,
                 "forwarder_ttl": 5,
             }
         }
@@ -73,6 +75,7 @@ class Simulation:
                 URBAN_ROUTING_HOPS_STRING: UrbanRoutingHops,
                 URBAN_ROUTING_INT_STRING: UrbanRoutingIntersection,
                 EPIDEMIC_ROUTING_STRING: Epidemic,
+                GYTAR_ROUTING_STRING: GyTar,
             }
             protocol = protocols[self.settings["protocol"]["type"]]
             protocol.route_message(protocol,
