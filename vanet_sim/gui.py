@@ -117,7 +117,7 @@ class MapFrame(tk.Frame):
             x = v.x + (_INTERSECTION_W_DIAMETER / 2)
             y = v.y + (_INTERSECTION_W_DIAMETER / 2)
 
-            t_id = self.canvas.create_text(x + _PADDING, y + _PADDING,
+            t_id = self.canvas.create_text(x + _PADDING, y + _PADDING, font=('Helvetica', '10'),
                                            text=v.id)
 
             self.vehicle_widgets[v.id] = (o_id, t_id)

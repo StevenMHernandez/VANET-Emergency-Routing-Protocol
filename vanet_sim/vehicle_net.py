@@ -65,11 +65,12 @@ class Vehicle:
         d_pos = (time - self.prev_time) * self.spd
         fwd_n = self._get_forward_neighbor()
 
-        if (fwd_n is not None and d_pos > _calc_distance(self, fwd_n) - 16
-                and time > 5):
-            d_pos = _calc_distance(self, fwd_n) - 16
+        if self.affected_at is not None:
+            return
+        elif fwd_n is not None and d_pos > _calc_distance(self, fwd_n) - 16:
+            d_pos *= 0.5
 
-            if self.cur_road.is_obstructed:
+            if self.cur_road.is_obstructed or fwd_n.affected_at is not None:
                 self.spd = 0
                 self.affected_at = time
 
@@ -78,7 +79,8 @@ class Vehicle:
             d_pos = 0
             self.spd = 0.0
             self.affected_at = time
-        elif self.cur_pos + d_pos >= self.cur_road.length:
+
+        if self.cur_pos + d_pos >= self.cur_road.length:
             d_pos -= self.cur_road.length
             self._next_road(time)
 
@@ -112,14 +114,23 @@ class Vehicle:
         self.spd = self.cur_road.spd_lim
 
     def _get_forward_neighbor(self):
-        """Gets the vehicle in front of itself.
+        """Gets the vehicle immediately in front of the current node.
 
-        :return: Vehicle in front of itself
+        :return: Vehicle immediately in front of the current node
         """
 
+        forward_neighbor = None
+
         for n in self.neighbors:
-            if n.cur_road == self.cur_road and n.cur_pos > self.cur_pos:
-                return n
+            on_current_road_and_ahead = self.cur_road == n.cur_road and self.cur_pos < n.cur_pos
+            on_different_roads_and_ahead = self.cur_road != n.cur_road and self.cur_pos > n.cur_pos
+            is_ahead = on_current_road_and_ahead or on_different_roads_and_ahead
+            if (is_ahead and _calc_distance(self, n) < 16
+                    and (forward_neighbor is None
+                         or _calc_distance(self, forward_neighbor) > _calc_distance(self, n))):
+                forward_neighbor = n
+
+        return forward_neighbor
 
     def update_neighbors(self, vehicle_net, communication_radius):
         """ Updates the list of neighbors that the vehicle sees.
@@ -143,7 +154,7 @@ class Vehicle:
         # allowed for example.
         if self.affected_at == time and self.received_at is None:
             self.is_cur_fwdr = True
-            self.msg = Message(src_isect=self.cur_road.start_node,
+            self.msg = Message(src_rd=self.cur_road,
                                dst_isect=self.cur_road.start_node)
             self.received_at = time
 
