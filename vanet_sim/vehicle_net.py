@@ -67,7 +67,7 @@ class Vehicle:
 
         if self.affected_at is not None:
             return
-        elif fwd_n is not None and d_pos > _calc_distance(self, fwd_n) - 16:
+        elif fwd_n is not None and d_pos > _calc_distance(self, fwd_n) - 16 and time > 5:
             d_pos *= 0.5
 
             if self.cur_road.is_obstructed or fwd_n.affected_at is not None:
