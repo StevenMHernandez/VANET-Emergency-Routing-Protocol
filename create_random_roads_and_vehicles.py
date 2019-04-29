@@ -8,7 +8,7 @@ __author__ = 'Adam Morrissett', 'Steven M. Hernandez'
 
 NUM_INTERSECTIONS_X = 8
 NUM_INTERSECTIONS_Y = 8
-NUM_VEHICLES = 100
+NUM_VEHICLES = 200
 NUM_INTERSECTIONS_PER_VEHICLE = 20
 OBSTRUCTION_START = (5, 2)
 OBSTRUCTION_END = (6, 2)
@@ -16,7 +16,7 @@ RANDOM_MOVEMENT = False # if False, roads act as one-way roads
 
 open('intersections.generated.csv', 'w').close()
 open('roads.generated.csv', 'w').close()
-open('vehicles.generated.csv', 'w').close()
+open('vehicles.200.generated.csv', 'w').close()
 
 #
 # Create intersections file
@@ -75,7 +75,7 @@ def random_binary():
     return math.floor((random.random() * 2))
 
 
-f = open('vehicles.generated.csv', 'a')
+f = open('vehicles.200.generated.csv', 'a')
 for v_i in range(1, NUM_VEHICLES + 1):
     intersections = [
         (math.floor(random.random() * NUM_INTERSECTIONS_X), math.floor(random.random() * NUM_INTERSECTIONS_Y))]

@@ -193,7 +193,7 @@ if __name__ == '__main__':
     road_map = road_net.RoadMap(intersection_file='../intersections.generated.csv',
                                 road_file='../roads.generated.csv')
 
-    vehicles = vehicle_net.build_vehicle_net(filepath='../vehicles.generated.csv',
+    vehicles = vehicle_net.build_vehicle_net(filepath='../vehicles.200.generated.csv',
                                              road_map=road_map)
 
     root = tk.Tk()

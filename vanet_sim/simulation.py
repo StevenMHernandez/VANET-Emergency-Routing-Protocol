@@ -36,9 +36,9 @@ class Simulation:
             "communication_radius": 45,
             "protocol": {
                 # "type": URBAN_ROUTING_INT_STRING,
-                # "type": URBAN_ROUTING_HOPS_STRING,
+                "type": URBAN_ROUTING_HOPS_STRING,
                 # "type": EPIDEMIC_ROUTING_STRING,
-                "type": GYTAR_ROUTING_STRING,
+                # "type": GYTAR_ROUTING_STRING,
                 "max_hops": 5,
                 "max_ints": 1,
                 "forwarder_ttl": 5,
