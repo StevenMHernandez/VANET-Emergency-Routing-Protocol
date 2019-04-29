@@ -202,6 +202,19 @@ class Vehicle:
         self._cur_road = r
         self.spd = self._cur_road.spd_lim
 
+    def route_contains_rd(self, road):
+        """Determines if route contains specified road.
+
+        :param road: road of interest
+        :return: if the route contains specified road
+        """
+
+        for rd in self.route:
+            if rd.name == road.name:
+                return True
+
+        return False
+
 
 def build_vehicle_net(filepath, road_map):
     """Builds a List of Vehicle object from file.

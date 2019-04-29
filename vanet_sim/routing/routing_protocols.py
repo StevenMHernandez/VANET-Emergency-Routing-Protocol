@@ -117,26 +117,35 @@ class UrbanRoutingProtocol(BaseRoutingProtocol):
                         or feed_ratios[n.cur_road] > feed_ratios[nxt_rd]):
                     nxt_rd = n.cur_road
 
+            # Find interested neighbors
+            intrstd_neighbors = [n for n in neighbors
+                                 if n.route_contains_rd(f_curr.msg.src_rd)]
+
             # 2. Determine which vehicle is furthest on this road
             # (closest to next intersection)
             f_next = None
             if nxt_rd is not None:
                 f_next = _find_node_closest_to(intersection=nxt_rd.end_node,
-                                               neighbors=neighbors,
+                                               neighbors=intrstd_neighbors,
                                                f_curr=f_curr)
 
             if f_next is not None:
                 ret_lst.append(f_next)
         else:
+            # Moved this to the vehicle's routing update method
             # if f_curr.original_forwarder:
             #     # Determine destination (intersection) of packet
             #     f_curr.dest_intersection = f_curr.cur_road.start_node
 
             dst_isect = f_curr.msg.dst_isect
 
+            # Find interested neighbors
+            intrstd_neighbors = [n for n in neighbors
+                                 if n.route_contains_rd(f_curr.msg.src_rd)]
+
             # 1. Find node which is closest to the intersection
             f_next = _find_node_closest_to(intersection=dst_isect,
-                                           neighbors=neighbors,
+                                           neighbors=intrstd_neighbors,
                                            f_curr=f_curr)
 
             # 2. Alternatively, find node which is headed towards the
