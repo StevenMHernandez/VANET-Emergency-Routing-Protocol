@@ -86,7 +86,7 @@ class Vehicle:
 
         self.cur_pos += d_pos
 
-        self.at_intersection = self.cur_pos <= road_net.INTERSECTION_RADIUS
+        self.at_intersection = self.cur_pos <= road_net.INTERSECTION_RADIUS * 3
 
         # Absolute positioning helps for determining neighbors and
         # placement on GUI.
@@ -210,7 +210,7 @@ class Vehicle:
         """
 
         for rd in self.route:
-            if rd.name == road.name:
+            if rd.name is road.name:
                 return True
 
         return False

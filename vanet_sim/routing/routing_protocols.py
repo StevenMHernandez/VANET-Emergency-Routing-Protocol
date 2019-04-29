@@ -148,13 +148,14 @@ class UrbanRoutingProtocol(BaseRoutingProtocol):
                                            neighbors=intrstd_neighbors,
                                            f_curr=f_curr)
 
+            # Wouldn't this be another variant to our protocol?
             # 2. Alternatively, find node which is headed towards the
             # intersection (but on a different road)
-            if f_next is None:
-                for n in neighbors:
-                    if n.received_at is None:
-                        if n.cur_road.end_node == dst_isect:
-                            f_next = n
+            # if f_next is None:
+            #     for n in neighbors:
+            #         if n.received_at is None:
+            #             if n.cur_road.end_node == dst_isect:
+            #                 f_next = n
 
             if f_next is not None:
                 ret_lst.append(f_next)
