@@ -41,6 +41,7 @@ class Simulation:
                 # "type": GYTAR_ROUTING_STRING,
                 "max_hops": 5,
                 "max_ints": 1,
+                "min_feed_ratio":0.1,
                 "forwarder_ttl": 5,
             }
         }
