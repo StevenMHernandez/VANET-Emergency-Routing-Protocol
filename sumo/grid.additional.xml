@@ -1,0 +1,5 @@
+<additional>
+    <variableSpeedSign id="incident_road" lanes=":F4_12_0">
+        <step time="100" speed="0"/>
+    </variableSpeedSign>
+</additional>
