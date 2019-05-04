@@ -26,7 +26,7 @@ This step shouldn't be required unless you want to try out new (road) network ar
 ### Create a simulation network (e.g. grid)
 
 ```
-netgenerate --grid -o grid.net.xml --grid.number 8 --default.lanenumber 1
+netgenerate --grid -o grid.net.xml --grid.number 10 --default.lanenumber 1
 ```
 
 
@@ -41,7 +41,7 @@ netconvert --osm-files map.osm -o your-net-name.net.xml
 
 ### Create random vehicle routes for `***.net.xml` 
 
-`python /usr/local/opt/sumo/share/sumo/tools/randomTrips.py -n your-net-name.net.xml -r your-net-name.rou.xml -e 5000 -l`
+`python /usr/local/opt/sumo/share/sumo/tools/randomTrips.py -n grid.net.xml -r grid.rou.xml -e 1000 -l`
 
 Where 5000 is the number of random vehicles or random routes to create.
  
