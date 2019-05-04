@@ -1,5 +1,6 @@
 <additional>
     <variableSpeedSign id="incident_road" lanes="E4F4_0">
-        <step time="100" speed="0"/>
+        <step time="500" speed="0"/>
     </variableSpeedSign>
+    <edgeData id="edgeDataPerSecond" file="../storage/sumo/grid.edgeData.out.xml" freq="1"/>
 </additional>

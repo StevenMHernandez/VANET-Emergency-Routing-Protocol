@@ -172,3 +172,6 @@ for t in range(len(vehicles_per_time_step)):
         vehicles[i].is_current_forwarder = remains_forwarder
 
     print(Evaluations.run(t, [v for i, v in vehicles.items()]))
+
+
+neighbors_per_vehicle_per_time = []

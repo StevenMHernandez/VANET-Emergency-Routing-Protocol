@@ -23,11 +23,12 @@
         <vehroute-output.write-unfinished value="true"/>
         <bt-output value="../storage/sumo/grid.bt.out.xml"/>
         <queue-output value="../storage/sumo/grid.queue.out.xml"/>
+        <netstate-output value="../storage/sumo/grid.netstate.out.xml"/>
     </output>
 
     <time>
         <begin value="0"/>
-        <end value="2500"/>
+        <end value="2000"/>
     </time>
 
     <processing>
