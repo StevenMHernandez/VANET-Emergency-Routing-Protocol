@@ -24,13 +24,13 @@ begin = int(sumocfg.find('time/begin').get('value'))
 end = int(sumocfg.find('time/end').get('value'))
 junctions = {j.get('id'):(float(j.get('x')), float(j.get('y'))) for j in net.findall("junction")}
 to_and_from_for_edge = {e.get("id"):(e.get("from"),e.get("to")) for e in net.findall("edge") if not e.get("function")}
-vehicles_per_time_step = [[int(y.get("id")) for y in x.findall("vehicle")] for x in fcd.findall("timestep")]
-vehicle_location_per_time_step = [{int(y.get("id")):(float(y.get("x")),float(y.get("x")),y.get("lane")) for y in x.findall("vehicle")} for x in fcd.findall("timestep")]
-vehicle_routes = {int(x.get("id")):x.find("route").get("edges").split(" ") for x in rou.findall("vehicle")}
-vehicles_left_road_at = {int(x.get("id")):[float(y) for y in x.find("route").get("exitTimes").split(" ") if y] for x in vehroute.findall("vehicle")}
+vehicles_per_time_step = [[y.get("id") for y in x.findall("vehicle")] for x in fcd.findall("timestep")]
+vehicle_location_per_time_step = [{y.get("id"):(float(y.get("x")),float(y.get("x")),y.get("lane")) for y in x.findall("vehicle")} for x in fcd.findall("timestep")]
+vehicle_routes = {x.get("id"):x.find("route").get("edges").split(" ") for x in rou.findall("vehicle")}
+vehicles_left_road_at = {x.get("id"):[float(y) for y in x.find("route").get("exitTimes").split(" ") if y] for x in vehroute.findall("vehicle")}
 
-vehicle_ids = [int(x.get('id')) for x in vehroute.findall('vehicle')]
-vaporized_vehicle_ids = [int(x.get('id')) for x in vehroute.findall('vehicle') if not x.get('arrival')]
+vehicle_ids = [x.get('id') for x in vehroute.findall('vehicle')]
+vaporized_vehicle_ids = [x.get('id') for x in vehroute.findall('vehicle') if not x.get('arrival')]
 num_vehicles = len(vehicle_ids)
 
 # Determine the last time a given vehicle was moving (e.g. when it was first queued)
@@ -40,7 +40,7 @@ for i in vehicle_ids:
 for x in fcd.findall('timestep'):
     for y in x.findall('vehicle'):
         if float(y.get('speed')):
-            last_time_moving[int(y.get('id'))] = float(x.get('time'))
+            last_time_moving[y.get('id')] = float(x.get('time'))
 last_time_moving = {k: v for k, v in last_time_moving.items() if k in vaporized_vehicle_ids}
 
 # sumocfg = None
@@ -82,7 +82,7 @@ class SUMOVehicle:
         return road in self.roads[r[0]:r[1]]
 
 
-vehicles = {i: SUMOVehicle(i, vehicle_routes[i], vehicles_left_road_at[i]) for i in vehicle_ids}
+vehicles = {i: SUMOVehicle(i, vehicle_routes[i.split(".")[0]], vehicles_left_road_at[i]) for i in vehicle_ids}
 
 
 
@@ -157,7 +157,7 @@ for t in range(len(vehicles_per_time_step)):
     # For each current forwarder:
     for i in current_forwarders:
         # Determine current neighbors
-        neighbors = [vehicles[int(s.get('id'))] for s in bt.find("bt[@id='" + str(i) + "']").findall("seen") if
+        neighbors = [vehicles[s.get('id')] for s in bt.find("bt[@id='" + str(i) + "']").findall("seen") if
                      float(s.get("tBeg")) < t < float(s.get("tEnd"))]
         # routing protocol
         protocols = {
@@ -167,7 +167,6 @@ for t in range(len(vehicles_per_time_step)):
             GYTAR_ROUTING_STRING: GyTar,
         }
         protocol = protocols[settings["protocol"]["type"]]()
-        print(protocol)
         remains_forwarder = protocol.route_message(vehicles[i], settings['protocol'], vehicles, neighbors, t, to_and_from_for_edge)
         vehicles[i].is_current_forwarder = remains_forwarder
 
