@@ -7,6 +7,7 @@ from sumo_sim.routing.UrbanRoutingIntersection import UrbanRoutingIntersection
 from sumo_sim.routing.Epidemic import Epidemic
 from sumo_sim.routing.Message import Message
 from sumo_sim.routing.UrbanRoutingHops import UrbanRoutingHops
+from sumo_sim.routing.InterestedOnlyProtocol import InterestedOnlyProtocol
 
 #
 # Collect data from XML first,
@@ -22,12 +23,15 @@ fcd = ET.parse('storage/sumo/grid.fcd.out.xml').getroot()
 # Collect data initially first instead of during the simulation loops!
 begin = int(sumocfg.find('time/begin').get('value'))
 end = int(sumocfg.find('time/end').get('value'))
-junctions = {j.get('id'):(float(j.get('x')), float(j.get('y'))) for j in net.findall("junction")}
-to_and_from_for_edge = {e.get("id"):(e.get("from"),e.get("to")) for e in net.findall("edge") if not e.get("function")}
+junctions = {j.get('id'): (float(j.get('x')), float(j.get('y'))) for j in net.findall("junction")}
+to_and_from_for_edge = {e.get("id"): (e.get("from"), e.get("to")) for e in net.findall("edge") if not e.get("function")}
 vehicles_per_time_step = [[y.get("id") for y in x.findall("vehicle")] for x in fcd.findall("timestep")]
-vehicle_location_per_time_step = [{y.get("id"):(float(y.get("x")),float(y.get("x")),y.get("lane")) for y in x.findall("vehicle")} for x in fcd.findall("timestep")]
-vehicle_routes = {x.get("id"):x.find("route").get("edges").split(" ") for x in rou.findall("vehicle")}
-vehicles_left_road_at = {x.get("id"):[float(y) for y in x.find("route").get("exitTimes").split(" ") if y] for x in vehroute.findall("vehicle")}
+vehicle_location_per_time_step = [
+    {y.get("id"): (float(y.get("x")), float(y.get("x")), y.get("lane")) for y in x.findall("vehicle")} for x in
+    fcd.findall("timestep")]
+vehicle_routes = {x.get("id"): x.find("route").get("edges").split(" ") for x in rou.findall("vehicle")}
+vehicles_left_road_at = {x.get("id"): [float(y) for y in x.find("route").get("exitTimes").split(" ") if y] for x in
+                         vehroute.findall("vehicle")}
 
 vehicle_ids = [x.get('id') for x in vehroute.findall('vehicle')]
 vaporized_vehicle_ids = [x.get('id') for x in vehroute.findall('vehicle') if not x.get('arrival')]
@@ -45,6 +49,7 @@ for x in fcd.findall('timestep'):
             last_road_moving_on[y.get('id')] = y.get('lane').split("_")[0]
 last_time_moving = {k: v for k, v in last_time_moving.items() if k in vaporized_vehicle_ids}
 last_road_moving_on = {k: v for k, v in last_road_moving_on.items() if k in vaporized_vehicle_ids}
+
 
 # sumocfg = None
 # net = None
@@ -92,12 +97,8 @@ class SUMOVehicle:
     @msg.setter
     def msg(self, msg):
         if self._msg is None:
-            # print(self.id, "received message")
-            # print(self.last_road_moving_on, self.cur_road)
             self.received_before_incident_road = not self.is_on_an_incident_road
-            # print(self.received_before_incident_road)
             self._msg = msg
-
 
     def route_contains_rd(self, settings, road):
         i = self.roads.index(self.cur_road)
@@ -110,22 +111,21 @@ vehicles = {i: SUMOVehicle(i, vehicle_routes[i.split(".")[0]],
                            last_road_moving_on[i] if i in last_road_moving_on else None)
             for i in vehicle_ids}
 
-
-
 URBAN_ROUTING_INT_STRING = "urban-int"
 URBAN_ROUTING_HOPS_STRING = "urban-hops"
 EPIDEMIC_ROUTING_STRING = "epidemic"
 GYTAR_ROUTING_STRING = "gytar"
-
+INTERESTED_ONLY_ROUTING_STRING = "interested-only"
 
 settings = {
     "intersection_radius": 25,
     "communication_radius": 45,
     "protocol": {
         # "type": URBAN_ROUTING_INT_STRING,
-        "type": URBAN_ROUTING_HOPS_STRING,
+        # "type": URBAN_ROUTING_HOPS_STRING,
         # "type": EPIDEMIC_ROUTING_STRING,
         # "type": GYTAR_ROUTING_STRING,
+        "type": INTERESTED_ONLY_ROUTING_STRING,
         "max_hops": 5,
         "max_ints": 1,
         "min_feed_ratio": 0.1,
@@ -162,12 +162,13 @@ for t in range(len(vehicles_per_time_step)):
         if vehicles[i].exists:
             # Determine if vehicle is at an intersection
             if vehicles[i].edge in to_and_from_for_edge:
-                (j_to,j_from) = to_and_from_for_edge[vehicles[i].edge]
-                junctions_to_search = [junctions[j_to],junctions[j_from]]
+                (j_to, j_from) = to_and_from_for_edge[vehicles[i].edge]
+                junctions_to_search = [junctions[j_to], junctions[j_from]]
             else:
                 junctions_to_search = [junctions[vehicles[i].lane]]
 
-            vehicles[i].at_intersection = len([1 for j in junctions_to_search if distance(vehicles[i], j) < settings["intersection_radius"]])
+            vehicles[i].at_intersection = len(
+                [1 for j in junctions_to_search if distance(vehicles[i], j) < settings["intersection_radius"]])
 
             # If vehicle is stopped @time=t
             if t == last_time_moving[i]:
@@ -191,12 +192,13 @@ for t in range(len(vehicles_per_time_step)):
             URBAN_ROUTING_INT_STRING: UrbanRoutingIntersection,
             EPIDEMIC_ROUTING_STRING: Epidemic,
             GYTAR_ROUTING_STRING: GyTar,
+            INTERESTED_ONLY_ROUTING_STRING: InterestedOnlyProtocol,
         }
         protocol = protocols[settings["protocol"]["type"]]()
-        remains_forwarder = protocol.route_message(vehicles[i], settings['protocol'], vehicles, neighbors, t, to_and_from_for_edge)
+        remains_forwarder = protocol.route_message(vehicles[i], settings['protocol'], vehicles, neighbors, t,
+                                                   to_and_from_for_edge)
         vehicles[i].is_current_forwarder = remains_forwarder
 
     print(Evaluations.run(t, [v for i, v in vehicles.items()]))
-
 
 neighbors_per_vehicle_per_time = []

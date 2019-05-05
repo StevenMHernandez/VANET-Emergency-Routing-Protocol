@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on Fri May  3 08:35:49 2019 by Eclipse SUMO Version 1.2.0
+<!-- generated on Sun May  5 10:02:31 2019 by Eclipse SUMO Version 1.2.0
 -->
 
 <configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
@@ -12,18 +12,18 @@
     </input>
 
     <output>
+        <netstate-dump value="../storage/sumo/grid.netstate.out.xml"/>
         <fcd-output value="../storage/sumo/grid.fcd.out.xml"/>
+        <queue-output value="../storage/sumo/grid.queue.out.xml"/>
         <summary-output value="../storage/sumo/grid.summary.out.xml"/>
-        <link-output value="../storage/sumo/grid.link.out.xml"/>
         <tripinfo-output value="../storage/sumo/grid.tripinfo.out.xml"/>
         <tripinfo-output.write-unfinished value="true"/>
         <vehroute-output value="../storage/sumo/grid.vehroute.out.xml"/>
         <vehroute-output.exit-times value="true"/>
         <vehroute-output.route-length value="true"/>
         <vehroute-output.write-unfinished value="true"/>
+        <link-output value="../storage/sumo/grid.link.out.xml"/>
         <bt-output value="../storage/sumo/grid.bt.out.xml"/>
-        <queue-output value="../storage/sumo/grid.queue.out.xml"/>
-        <netstate-output value="../storage/sumo/grid.netstate.out.xml"/>
     </output>
 
     <time>
@@ -33,6 +33,7 @@
 
     <processing>
         <collision.action value="none"/>
+        <scale value="10"/>
         <time-to-teleport value="9999999999"/>
     </processing>
 

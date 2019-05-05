@@ -41,7 +41,7 @@ netconvert --osm-files map.osm -o your-net-name.net.xml
 
 ### Create random vehicle routes for `***.net.xml` 
 
-`python /usr/local/opt/sumo/share/sumo/tools/randomTrips.py -n grid.net.xml -r grid.rou.xml -e 1000 -l`
+`python /usr/local/opt/sumo/share/sumo/tools/randomTrips.py -n grid.net.xml -r grid.rou.xml -e 100 -l`
 
 Where 5000 is the number of random vehicles or random routes to create.
  
