@@ -27,7 +27,8 @@ class Evaluations:
         n = 0
 
         for v in vehicle_net:
-            if v.affected_at is not None and v.received_at is not None and not v.original_forwarder:
+            if (v.last_road_moving_on is not None
+                    and v.received_before_incident_road):
                 n += 1
 
         return n
@@ -38,9 +39,9 @@ class Evaluations:
         s = 0
 
         for v in vehicle_net:
-            if v.affected_at is not None and \
-                    v.received_at is not None and \
-                    v.affected_at >= v.received_at:
+            if (v.affected_at
+                    and v.last_road_moving_on is not None
+                    and v.received_before_incident_road):
                 n += 1
                 s += v.affected_at - v.received_at
 
@@ -52,7 +53,7 @@ class Evaluations:
                        "Time: {}",
                        "# affected: {}",
                        "# receiving message: {}",
-                       "# affected and received: {}",
+                       "# affected and received early: {}",
                        "AVG time to react: {}",
                        "",
                        ])

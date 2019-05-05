@@ -35,13 +35,16 @@ num_vehicles = len(vehicle_ids)
 
 # Determine the last time a given vehicle was moving (e.g. when it was first queued)
 last_time_moving = {}
+last_road_moving_on = {}
 for i in vehicle_ids:
     last_time_moving[i] = 0
 for x in fcd.findall('timestep'):
     for y in x.findall('vehicle'):
         if float(y.get('speed')):
             last_time_moving[y.get('id')] = float(x.get('time'))
+            last_road_moving_on[y.get('id')] = y.get('lane').split("_")[0]
 last_time_moving = {k: v for k, v in last_time_moving.items() if k in vaporized_vehicle_ids}
+last_road_moving_on = {k: v for k, v in last_road_moving_on.items() if k in vaporized_vehicle_ids}
 
 # sumocfg = None
 # net = None
@@ -51,13 +54,13 @@ last_time_moving = {k: v for k, v in last_time_moving.items() if k in vaporized_
 
 
 class SUMOVehicle:
-    def __init__(self, id, route, left_road_at):
+    def __init__(self, id, route, left_road_at, last_road_moving_on):
         self.id = id
         self.received_at = None
         self.affected_at = None
         self.is_current_forwarder = False
         self.original_forwarder = None
-        self.msg = None
+        self._msg = None
         self.exists = False
         self.x = None
         self.y = None
@@ -68,6 +71,8 @@ class SUMOVehicle:
         self.last_intersection = None
         self.cur_road = None
         self.started_at = None
+        self.last_road_moving_on = last_road_moving_on
+        self.received_before_incident_road = None
 
     @property
     def passed_previous_intersection_at(self):
@@ -76,13 +81,34 @@ class SUMOVehicle:
             return self.started_at
         return self.left_road_at[i - 1]
 
+    @property
+    def is_on_an_incident_road(self):
+        return self.last_road_moving_on is not None and self.last_road_moving_on == self.cur_road
+
+    @property
+    def msg(self):
+        return self._msg
+
+    @msg.setter
+    def msg(self, msg):
+        if self._msg is None:
+            # print(self.id, "received message")
+            # print(self.last_road_moving_on, self.cur_road)
+            self.received_before_incident_road = not self.is_on_an_incident_road
+            # print(self.received_before_incident_road)
+            self._msg = msg
+
+
     def route_contains_rd(self, settings, road):
         i = self.roads.index(self.cur_road)
         r = (max(0, i - settings["num_previous_roads"]), min(len(self.roads), i + settings["num_future_roads"]))
         return road in self.roads[r[0]:r[1]]
 
 
-vehicles = {i: SUMOVehicle(i, vehicle_routes[i.split(".")[0]], vehicles_left_road_at[i]) for i in vehicle_ids}
+vehicles = {i: SUMOVehicle(i, vehicle_routes[i.split(".")[0]],
+                           vehicles_left_road_at[i],
+                           last_road_moving_on[i] if i in last_road_moving_on else None)
+            for i in vehicle_ids}
 
 
 
@@ -97,8 +123,8 @@ settings = {
     "communication_radius": 45,
     "protocol": {
         # "type": URBAN_ROUTING_INT_STRING,
-        # "type": URBAN_ROUTING_HOPS_STRING,
-        "type": EPIDEMIC_ROUTING_STRING,
+        "type": URBAN_ROUTING_HOPS_STRING,
+        # "type": EPIDEMIC_ROUTING_STRING,
         # "type": GYTAR_ROUTING_STRING,
         "max_hops": 5,
         "max_ints": 1,

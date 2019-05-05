@@ -7,7 +7,7 @@ class Epidemic(BaseRoutingProtocol):
         ret_lst = []
 
         for n in neighbors:
-            if n.received_at is None and not n.original_forwarder:
+            if n.received_at is None:
                 ret_lst.append(n)
 
         return ret_lst
