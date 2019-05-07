@@ -15,6 +15,7 @@ def plots_to_generate():
         "Percentage of Stopped Vehicles": percent_stopped_vehicles_in_network,
         "Avg Number of Neighbors Per Vehicle": avg_num_neighbors_per_vehicle,
         "Percentage of Vehicle with Zero Neighbors": percent_without_neighbors,
+        "Average Percent of the Network a Vehicle can communicate with": avg_percent_of_network_communicatable_by_vehicle,
     }
 
 
@@ -195,7 +196,7 @@ def percent_without_neighbors():
     number_of_vehicles_per_time = []
     vehicles_per_time = []
     for t in fcd.findall("timestep"):
-        vs = [int(v.get("id")) for v in t.findall("vehicle")]
+        vs = [v.get("id") for v in t.findall("vehicle")]
         vehicles_per_time.append(vs)
         number_of_vehicles_per_time.append(len(vs))
 
@@ -207,7 +208,7 @@ def percent_without_neighbors():
             t_end = float(s.get("tEnd"))
             for t in range(math.ceil(t_beg), math.floor(t_end)):
                 counts_per_time[t] += 1
-        counts_per_vehicle_per_time[int(v.get("id"))] = counts_per_time
+        counts_per_vehicle_per_time[v.get("id")] = counts_per_time
 
     avg_num_neighbors = []
     for t in range(begin, end):
@@ -225,6 +226,53 @@ def percent_without_neighbors():
     plt.plot(x, avg_num_neighbors)
     plt.xlabel("Time (s)")
     plt.ylabel("Percentage of vehicle without neighbors")
+    plt.show()
+
+
+def avg_percent_of_network_communicatable_by_vehicle():
+    sumocfg = ET.parse('../sumo/grid.sumocfg').getroot()
+    begin = int(sumocfg.find('time/begin').get('value'))
+    end = int(sumocfg.find('time/end').get('value'))
+    bt = ET.parse('../storage/sumo/grid.bt.out.xml').getroot()
+    fcd = ET.parse('../storage/sumo/grid.fcd.out.xml').getroot()
+
+    num_vehicles = []
+    for t in fcd.findall("timestep"):
+        vs = [v for v in t.findall("vehicle")]
+        num_vehicles.append(len(vs))
+
+    counts_per_vehicle_per_time = []
+    for v in bt.findall("bt"):
+        counts_per_time = [0] * (end - begin)
+        for s in v.findall("seen"):
+            t_beg = float(s.get("tBeg"))
+            t_end = float(s.get("tEnd"))
+            for t in range(math.ceil(t_beg), math.floor(t_end)):
+                counts_per_time[t] += 1
+        counts_per_vehicle_per_time.append(counts_per_time)
+
+    avg_percentage_of_network = []
+    max_percentage_of_network = []
+    min_percentage_of_network = []
+    for t in range(begin, end):
+        l = [x[t] for x in counts_per_vehicle_per_time]
+        if sum(l) == 0:
+            avg_percentage_of_network.append(0)
+            max_percentage_of_network.append(0)
+            min_percentage_of_network.append(0)
+        else:
+            avg_percentage_of_network.append(sum(l) / num_vehicles[t] / len(l))
+            max_percentage_of_network.append(max(l) / num_vehicles[t])
+            min_percentage_of_network.append(min(l) / num_vehicles[t])
+
+    x = range(len(avg_percentage_of_network))
+    y = avg_percentage_of_network
+    plt.plot(x, max_percentage_of_network, label="max")
+    plt.plot(x, avg_percentage_of_network, label="avg")
+    plt.plot(x, min_percentage_of_network, label="min")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Average percentage of network visible per vehicle")
+    plt.legend()
     plt.show()
 
 
